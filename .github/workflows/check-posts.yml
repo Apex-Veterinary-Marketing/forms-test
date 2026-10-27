@@ -1,0 +1,39 @@
+# Validates blog posts (docs/BLOG-POST-CONTRACT.md) whenever they change.
+# Automations publish straight to main (no branch, no review), so this runs on
+# every push to main that touches the blog: a post that breaks the contract
+# fails here and GitHub notifies the committer. Cloudflare's build fails the
+# same way, so a bad post never replaces the live site (it keeps the last good
+# deploy) — fix or remove the post and push again.
+name: Check blog posts
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/content/blog/**"
+      - "src/assets/blog/**"
+      - "src/content/blog-categories/**"
+  pull_request:
+    paths:
+      - "src/content/blog/**"
+      - "src/assets/blog/**"
+      - "src/content/blog-categories/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Post contract
+        run: npm run check:posts
+      - name: Full build (schema + images)
+        run: npx astro build

@@ -1,0 +1,38 @@
+/*
+ * WEB FONT — audit item A6 (2026-09-21): tokens.css always had --font-body/
+ * --font-heading, but nothing ever loaded a real typeface; every page fell
+ * back to the browser's own system-ui.
+ *
+ * Currently Inter (SIL OFL 1.1, free for commercial use) — a REFERENCE
+ * choice, not a locked-in brand decision, same as tokens.css's palette:
+ * swap it per client. Self-hosted via @fontsource (an npm package of the
+ * real WOFF2 files) rather than a Google Fonts CDN `<link>` — no external
+ * network request at runtime, works in offline/restricted-network dev
+ * environments, and each import below pulls in only the ONE weight it
+ * names (with the font's own real per-script subsetting — a browser only
+ * downloads the unicode range it actually needs), not a whole variable
+ * font. `font-display: swap` is already set inside @fontsource's own CSS —
+ * nothing extra to configure for that.
+ *
+ * Weights loaded = exactly what src/components/*.astro use today (400 body
+ * text, 500 nowhere yet but cheap insurance for a client design that wants
+ * a mid-weight, 600/700 headings and buttons — grep `font-weight:` across
+ * src/ before changing this list, so it stays a deliberate set, not creep).
+ *
+ * TO SWAP THE FONT PER CLIENT:
+ *   1. npm uninstall @fontsource/inter
+ *   2. npm install @fontsource/<new-family>        (browse fontsource.org/fonts)
+ *   3. Replace the @import lines below with the new package's paths — keep
+ *      the same weight set unless the design calls for more/fewer
+ *   4. Update --font-body / --font-heading in tokens.css to the new
+ *      family's real internal name (check the package's own generated CSS,
+ *      its `font-family:` value — not always identical to the npm package name)
+ *   5. BaseLayout.astro preloads the latin 400 + 700 files by name
+ *      (`@fontsource/inter/files/inter-latin-400-normal.woff2` etc.) — update
+ *      those two import paths to the new package's equivalent files, or
+ *      drop the preload if the new choice doesn't need it
+ */
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";

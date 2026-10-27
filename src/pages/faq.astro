@@ -1,0 +1,25 @@
+---
+// Aggregates every service's FAQs into one site-wide FAQ page, since
+// Skeleton has no separate "site FAQs" collection — services already
+// model FAQs (content.config.ts: services.faqs) and that's the richest
+// source of real Q&A content a client will have. See Skeleton-Build-Spec.md
+// §10 ("LLM data" — favor Q&A-shaped content).
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHeaderBanner from "../components/PageHeaderBanner.astro";
+import FaqAccordion from "../components/FaqAccordion.astro";
+import { getAllServices } from "../lib/data/services";
+
+const services = await getAllServices();
+const faqs = services.flatMap((s) => s.data.faqs);
+---
+
+<BaseLayout title="FAQs" description="Frequently asked questions.">
+  <PageHeaderBanner heading="Frequently Asked Questions" />
+  <div class="page-section">
+    <FaqAccordion faqs={faqs} />
+  </div>
+</BaseLayout>
+
+<style>
+  .page-section { max-width: 48rem; margin-inline: auto; padding: var(--space-xl) var(--space-md); }
+</style>

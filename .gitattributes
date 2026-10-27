@@ -1,0 +1,17 @@
+# Shared file (identical in every Skeleton site): LF in the repo and the working tree on
+# every OS, so Windows checkouts stop showing CRLF-only changes.
+* text=auto eol=lf
+
+# Images and fonts are never text.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.avif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.eot binary

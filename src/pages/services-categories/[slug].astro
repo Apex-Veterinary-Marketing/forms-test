@@ -1,0 +1,47 @@
+---
+// CMS-powered: services filtered to one category. Grounded in the real V2
+// export's detail_services-categories.html — same .services-grid of
+// .service-link-block as services.html, just pre-filtered — so this
+// reuses ServiceGrid/ServiceCard rather than inventing new markup, matching
+// the real export's structure 1:1. Empty-state message mirrors the
+// export's w-dyn-empty "No items found." fallback.
+//
+// ServicesSidebar mounted 2026-09-17 (direct instruction: every
+// services-related page always carries it), pre-opened to this page's own
+// category.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PageHeaderBanner from "../../components/PageHeaderBanner.astro";
+import ServiceGrid from "../../components/ServiceGrid.astro";
+import ServicesSidebar from "../../components/ServicesSidebar.astro";
+import { getAllServiceCategories, getServiceCategoryBySlug } from "../../lib/data/serviceCategories";
+import { getServicesByCategory } from "../../lib/data/services";
+import bannerGeneric from "../../assets/banner-generic.png";
+
+export async function getStaticPaths() {
+  const categories = await getAllServiceCategories();
+  return categories.map((category) => ({ params: { slug: category.id }, props: { category } }));
+}
+
+const { category } = Astro.props;
+const services = await getServicesByCategory(category.id);
+---
+
+<BaseLayout title={category.data.name} description={`${category.data.name} services`}>
+  <PageHeaderBanner heading={category.data.name} image={bannerGeneric} />
+  <div class="services-layout">
+    <div class="page-section">
+      {services.length > 0 ? (
+        <ServiceGrid services={services} />
+      ) : (
+        <p class="page-section__empty">No items found.</p>
+      )}
+    </div>
+    <ServicesSidebar activeCategoryId={category.id} />
+  </div>
+</BaseLayout>
+
+<style>
+  .services-layout { max-width: var(--container-max); margin-inline: auto; padding: var(--space-xl) var(--space-md); display: flex; gap: var(--space-xl); align-items: flex-start; flex-wrap: wrap; }
+  .page-section { flex: 1 1 30rem; }
+  .page-section__empty { color: var(--text-muted); text-align: center; }
+</style>

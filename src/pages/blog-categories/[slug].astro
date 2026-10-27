@@ -1,0 +1,44 @@
+---
+// CMS-powered: blog posts filtered to one category. Grounded in the real V2
+// export's detail_blog-categories.html — same .blog-posts grid of
+// .blog-posts-card as blog.html, just pre-filtered — reuses
+// BlogGrid/BlogCard rather than inventing new markup. Empty-state message
+// mirrors the export's w-dyn-empty "No items found." fallback.
+//
+// Only categories with at least one published post get a page, so an empty
+// category (vet sites don't use categories; the placeholder file stays for
+// structure) never ships a thin page or a sitemap entry.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PageHeaderBanner from "../../components/PageHeaderBanner.astro";
+import BlogGrid from "../../components/BlogGrid.astro";
+import { getAllBlogCategories, getBlogCategoryBySlug } from "../../lib/data/blogCategories";
+import { getPostsByCategory } from "../../lib/data/blog";
+
+export async function getStaticPaths() {
+  const categories = await getAllBlogCategories();
+  const withPosts = [];
+  for (const category of categories) {
+    if ((await getPostsByCategory(category.id)).length > 0) withPosts.push(category);
+  }
+  return withPosts.map((category) => ({ params: { slug: category.id }, props: { category } }));
+}
+
+const { category } = Astro.props;
+const posts = await getPostsByCategory(category.id);
+---
+
+<BaseLayout title={category.data.name} description={`${category.data.name} articles`}>
+  <PageHeaderBanner heading={category.data.name} />
+  <div class="page-section">
+    {posts.length > 0 ? (
+      <BlogGrid posts={posts} />
+    ) : (
+      <p class="page-section__empty">No items found.</p>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  .page-section { max-width: var(--container-max); margin-inline: auto; padding: var(--space-xl) var(--space-md); }
+  .page-section__empty { color: var(--text-muted); text-align: center; }
+</style>

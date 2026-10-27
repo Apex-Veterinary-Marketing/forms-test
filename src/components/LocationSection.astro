@@ -1,0 +1,65 @@
+---
+// Practice location: address, hours, phone, map embed. Uses SiteInfo
+// fields already modeled in src/data/site.ts. Generic/token-driven; not
+// grounded in a staged real-markup reference. See Skeleton-Build-Spec.md §6.
+import { getSiteInfo } from "../lib/data/site";
+import { phoneHref } from "../lib/utils/phone";
+
+export interface Props {
+  heading?: string;
+}
+const { heading = "Visit Us" } = Astro.props;
+const site = await getSiteInfo();
+---
+
+<section class="location-section">
+  <div class="location-section__info">
+    <h2 class="location-section__heading">{heading}</h2>
+    {(site.address || site.addressLine2) && (
+      <p class="location-section__address">
+        {site.address && <>{site.address}<br /></>}{site.addressLine2}
+      </p>
+    )}
+    {site.hours && (
+      <div class="location-section__hours">
+        <h3>Hours</h3>
+        <div set:html={site.hours} />
+      </div>
+    )}
+    {site.phoneNumber && (
+      <a class="location-section__phone" href={phoneHref(site)}>
+        {site.phoneNumber}
+      </a>
+    )}
+  </div>
+  {site.mapEmbedLink ? (
+    <div class="location-section__map">
+      <iframe src={site.mapEmbedLink} loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map to our location"></iframe>
+    </div>
+  ) : site.address && (
+    <div class="location-section__map location-section__map--placeholder" aria-hidden="true">
+      <p>Google Maps embed goes here — set <code>site.mapEmbedLink</code>.</p>
+    </div>
+  )}
+</section>
+
+<style>
+  .location-section { display: flex; flex-wrap: wrap; gap: var(--space-xl); max-width: var(--container-max); margin-inline: auto; padding: var(--space-xl) var(--space-md); }
+  .location-section__info, .location-section__map { flex: 1 1 20rem; }
+  .location-section__heading { margin: 0 0 var(--space-sm); }
+  .location-section__phone { display: inline-block; margin-block-start: var(--space-sm); font-weight: 700; color: var(--main); text-decoration: none; }
+  .location-section__map iframe { width: 100%; min-height: 20rem; border: 0; border-radius: var(--radius-md); }
+  .location-section__map--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 20rem;
+    border: 1px dashed var(--light-grey);
+    border-radius: var(--radius-md);
+    background: var(--solid-bg);
+    color: var(--text-muted);
+    text-align: center;
+    padding: var(--space-md);
+  }
+  .location-section__map--placeholder code { font-size: 0.85em; }
+</style>

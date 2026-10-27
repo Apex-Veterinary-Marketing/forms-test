@@ -1,0 +1,88 @@
+---
+// Boots the motion layer (see src/styles/motion.css for the attribute API).
+// Mounted ONCE, inside <head>, from BaseLayout — not per page.
+//
+// Two scripts, on purpose:
+//   1. inline + synchronous: runs before first paint so reveal-hidden
+//      elements never flash visible-then-hidden. Skipped entirely under
+//      prefers-reduced-motion, and it arms a 4s failsafe that un-hides
+//      everything if script #2 never boots.
+//   2. bundled module: the actual controller — an IntersectionObserver that
+//      adds .is-revealed, sets the stagger/delay custom properties, and
+//      removes data-reveal once an element has finished revealing (so stale
+//      transforms can't fight hover styles or trap position:fixed children).
+import "../styles/motion.css";
+---
+
+<script is:inline>
+  (function () {
+    var root = document.documentElement;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    root.classList.add("motion-ready");
+    setTimeout(function () {
+      if (!window.__motionReady) root.classList.add("motion-failsafe");
+    }, 4000);
+  })();
+</script>
+
+<script>
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const items = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"));
+
+  // Stagger: a parent marked data-reveal-stagger numbers its [data-reveal] descendants in DOM order.
+  document.querySelectorAll<HTMLElement>("[data-reveal-stagger]").forEach((parent) => {
+    const step = parent.getAttribute("data-reveal-stagger");
+    if (step) parent.style.setProperty("--motion-stagger", `${step}ms`);
+    parent.querySelectorAll<HTMLElement>("[data-reveal]").forEach((child, index) => {
+      child.style.setProperty("--reveal-index", String(index));
+    });
+  });
+  items.forEach((el) => {
+    const delay = el.getAttribute("data-reveal-delay");
+    if (delay) el.style.setProperty("--reveal-delay", `${delay}ms`);
+  });
+
+  // Once shown, drop the attribute so no leftover transform/transition/will-change remains.
+  function settle(el: HTMLElement) {
+    el.removeAttribute("data-reveal");
+    el.classList.remove("is-revealed");
+    el.style.removeProperty("--reveal-index");
+    el.style.removeProperty("--reveal-delay");
+  }
+
+  function reveal(el: HTMLElement) {
+    if (reduceMotion) return settle(el);
+    el.classList.add("is-revealed");
+    const delay = parseFloat(el.style.getPropertyValue("--reveal-delay")) || 0;
+    const index = parseFloat(el.style.getPropertyValue("--reveal-index")) || 0;
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      settle(el);
+    };
+    el.addEventListener("transitionend", (e) => {
+      if (e.target === el && e.propertyName === "opacity") finish();
+    });
+    // Fallback if transitionend never fires (element hidden mid-reveal, etc.).
+    window.setTimeout(finish, 1500 + delay + index * 400);
+  }
+
+  if (reduceMotion || !("IntersectionObserver" in window)) {
+    items.forEach(settle);
+  } else {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          reveal(entry.target as HTMLElement);
+          observer.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
+    );
+    items.forEach((el) => observer.observe(el));
+  }
+
+  (window as unknown as { __motionReady?: boolean }).__motionReady = true;
+</script>

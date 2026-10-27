@@ -1,0 +1,96 @@
+---
+// CMS-powered blog post detail. Grounded in the real V2 export's
+// detail_blog.html: .page-header carries a post-metadata-wrapper (author +
+// date) alongside the title — PageHeaderBanner doesn't model that, so it's
+// page-specific markup layered under the banner, same approach the
+// doctor/staff detail pages take. Main image (.blog-img-mask-2), body
+// (.content-rt), and a "Our Latest Stories" BlogGrid of other posts all
+// have a direct real-markup counterpart.
+//
+// Schema: BlogPosting node per Skeleton-Build-Spec.md §9, author/publisher
+// linked by @id reference rather than duplicated — author resolves to the
+// doctor's own Person node from /doctors/[slug] (§4.3: blog.author →
+// doctors), publisher to the site's global Business node (§14 item 8).
+import { render } from "astro:content";
+import { Image } from "astro:assets";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PageHeaderBanner from "../../components/PageHeaderBanner.astro";
+import BlogGrid from "../../components/BlogGrid.astro";
+import { getAllPosts, getPostBySlug } from "../../lib/data/blog";
+import { getDoctorBySlug } from "../../lib/data/doctors";
+
+export async function getStaticPaths() {
+  const posts = await getAllPosts();
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const heading = post.data.titleTag || post.data.name;
+
+const { Content } = await render(post);
+// author (a doctor) is optional; authorName is the plain byline otherwise.
+const author = post.data.author ? await getDoctorBySlug(post.data.author.id) : undefined;
+
+const allPosts = await getAllPosts();
+const morePosts = allPosts.filter((p) => p.id !== post.id).slice(0, 3);
+
+const formattedDate = post.data.pubDate.toLocaleDateString("en-US", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
+const graph = [
+  {
+    "@type": "BlogPosting",
+    "@id": "#article",
+    headline: heading,
+    description: post.data.metaDescription || post.data.postSummary || undefined,
+    datePublished: post.data.pubDate.toISOString(),
+    author: author ? { "@id": `/doctors/${author.id}#person` } : post.data.authorName ? { "@type": "Person", name: post.data.authorName } : { "@id": "#business" },
+    publisher: { "@id": "#business" },
+  },
+];
+---
+
+<BaseLayout title={heading} description={post.data.metaDescription || post.data.postSummary} ogImage={post.data.postThumbnail} ogType="article" schemaGraph={graph}>
+  <PageHeaderBanner heading={post.data.name} />
+
+  <div class="blog-post-meta">
+    {author ? (
+      <span class="blog-post-meta__author">
+        Written by <a href={`/doctors/${author.id}`}>{author.data.shortName || author.data.name}</a>
+      </span>
+    ) : post.data.authorName && (
+      <span class="blog-post-meta__author">Written by {post.data.authorName}</span>
+    )}
+    <span class="blog-post-meta__date">{post.data.monthLabel || formattedDate}</span>
+  </div>
+
+  {post.data.postThumbnail && (
+    <div class="blog-post-image">
+      <Image src={post.data.postThumbnail} alt={post.data.thumbnailAlt || ""} class="blog-post-image__img" />
+    </div>
+  )}
+
+  <div class="blog-post-body content-rt">
+    <Content />
+  </div>
+
+  {morePosts.length > 0 && (
+    <section class="blog-post-more">
+      <h2 class="blog-post-more__heading">Our Latest Stories</h2>
+      <BlogGrid posts={morePosts} />
+    </section>
+  )}
+</BaseLayout>
+
+<style>
+  .blog-post-meta { max-width: var(--container-max-narrow); margin: var(--space-md) auto 0; padding: 0 var(--space-md); display: flex; gap: var(--space-md); align-items: center; flex-wrap: wrap; color: var(--text-muted); font-size: var(--font-size-sm); }
+  .blog-post-meta__author a { color: var(--main); }
+  .blog-post-image { max-width: var(--container-max); margin: var(--space-lg) auto; padding: 0 var(--space-md); }
+  .blog-post-image__img { width: 100%; aspect-ratio: 16 / 7; object-fit: cover; border-radius: var(--radius-md); }
+  .blog-post-body { max-width: var(--container-max-narrow); margin-inline: auto; padding: var(--space-md); }
+  .blog-post-more { max-width: var(--container-max); margin-inline: auto; padding: var(--space-xl) var(--space-md); background: var(--solid-bg); }
+  .blog-post-more__heading { text-align: center; margin: 0 0 var(--space-lg); }
+</style>

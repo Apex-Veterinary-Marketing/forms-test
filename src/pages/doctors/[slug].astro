@@ -1,0 +1,72 @@
+---
+// CMS-powered doctor detail. Grounded in the real V2 export's
+// detail_doctors.html: .doctors-flex > .doctor-box-image-wrapper (TWO
+// images — mainImage + secondaryImage, both rounded-corners) +
+// .doctor-box-content (a "Meet" pre-heading, name, full bio richtext).
+// Page-specific markup, not a new shared component — see Progress.md
+// 2026-09-02 and Plan.md §8. Staff's version of this page (one image, no
+// secondaryImage) is the sibling /staff/[slug].astro.
+//
+// Emits a Person schema node (@id /doctors/{slug}#person) referencing the site's
+// Business node — closes part of §14 item 8 alongside BaseLayout's global
+// Business node. Blog posts can reference a doctor-author the same way
+// once written, without re-declaring the doctor's info per post.
+import { Image } from "astro:assets";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PageHeaderBanner from "../../components/PageHeaderBanner.astro";
+import { getAllDoctors, getDoctorBySlug } from "../../lib/data/doctors";
+import { stripHtml } from "../../lib/utils/stripHtml";
+
+export async function getStaticPaths() {
+  const doctors = await getAllDoctors();
+  return doctors.map((doctor) => ({ params: { slug: doctor.id }, props: { doctor } }));
+}
+
+const { doctor } = Astro.props;
+const heading = doctor.data.name;
+// bioShort is rich text (see content.config.ts) — strip tags before it
+// feeds a plain-text context (meta description, JSON-LD description).
+const plainBioShort = doctor.data.bioShort ? stripHtml(doctor.data.bioShort) : undefined;
+
+const graph = [
+  {
+    "@type": "Person",
+    "@id": "#person",
+    name: heading,
+    worksFor: { "@id": "#business" },
+    description: plainBioShort,
+  },
+];
+---
+
+<BaseLayout title={heading} description={plainBioShort} schemaGraph={graph}>
+  <PageHeaderBanner heading={heading} />
+
+  <div class="general-section">
+    <div class="doctors-flex">
+      <div class="doctors-flex__images">
+        {doctor.data.mainImage && (
+          <Image src={doctor.data.mainImage} alt={doctor.data.imageAltText || heading} class="doctors-flex__image" />
+        )}
+        {doctor.data.secondaryImage && (
+          <Image src={doctor.data.secondaryImage} alt="" class="doctors-flex__image" />
+        )}
+      </div>
+      <div class="doctors-flex__content">
+        <p class="doctors-flex__eyebrow">Meet</p>
+        <h2 class="doctors-flex__heading">{heading}</h2>
+        {doctor.data.bio && <div class="content-rt" set:html={doctor.data.bio} />}
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .general-section { max-width: var(--container-max); margin-inline: auto; padding: var(--space-xl) var(--space-md); }
+  .doctors-flex { display: flex; flex-wrap: wrap; gap: var(--space-xl); align-items: flex-start; }
+  .doctors-flex__images { flex: 1 1 20rem; display: flex; gap: var(--space-sm); }
+  .doctors-flex__image { flex: 1 1 0; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--radius-md); }
+  .doctors-flex__content { flex: 2 1 24rem; }
+  .doctors-flex__eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: var(--font-size-sm); color: var(--main); margin: 0 0 var(--space-2xs); }
+  .doctors-flex__heading { margin: 0 0 var(--space-md); }
+</style>

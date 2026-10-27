@@ -1,0 +1,195 @@
+---
+// Wires every page together: SEO head, optional schema graph, the fixed
+// header/footer/callbar chrome, and the two globally-mounted modals
+// (site-wide contact form, reputation widget) that any page can trigger
+// via data-modal-target. See Skeleton-Build-Spec.md §6.
+import SeoHead from "../components/SeoHead.astro";
+import SchemaGraph from "../components/SchemaGraph.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import MobileCallbar from "../components/MobileCallbar.astro";
+import Modal from "../components/Modal.astro";
+import GravityFormEmbed from "../components/GravityFormEmbed.astro";
+import ReputationWidget from "../components/ReputationWidget.astro";
+import AccessibilityWidget from "../components/AccessibilityWidget.astro";
+import MotionLayer from "../components/MotionLayer.astro";
+import { getSiteSchemaNodes, buildBreadcrumb, normalizeIds } from "../lib/schema/organization";
+import { getImage } from "astro:assets";
+import { getSiteInfo } from "../lib/data/site";
+import tokensRaw from "../styles/tokens.css?raw";
+import "../styles/tokens.css";
+import "../styles/icon-font.css";
+import "../styles/fonts.css";
+import type { ImageMetadata } from "astro";
+
+// Preload the two highest-impact font FILES (not just the stylesheet) for
+// the current typeface — the body-text weight (400) and the weight
+// headings/buttons actually render at (700: no component sets heading
+// font-weight explicitly, so h1-h6 use the browser's own default bold).
+// `?url` resolves to the real hashed build output path. Swapping the
+// typeface in styles/fonts.css? Update these two paths to match (or drop
+// the preload if the new choice doesn't warrant it) — see that file.
+import interLatin400 from "@fontsource/inter/files/inter-latin-400-normal.woff2?url";
+import interLatin700 from "@fontsource/inter/files/inter-latin-700-normal.woff2?url";
+
+export interface Props {
+  title: string; // page-specific title segment (e.g. "Contact Us") unless titleTemplate="full"
+  description?: string; // falls back to a generic sentence if omitted — real copy is a launch task, not a build one
+  canonical?: string; // override; default is Astro.url resolved against the configured domain — pages don't need to set this
+  ogImage?: ImageMetadata | string; // page-specific social image (e.g. a blog post's or service's cover); falls back to public/og-default.png
+  ogType?: "website" | "article";
+  ogImageAlt?: string; // alt text for the social image (collection pages pass their feature image's alt)
+  /** "page" (default): title becomes "{title} | {practiceName}" (omitted if that exceeds 60 chars, per the
+   *  agency's webflow-prelaunch-meta skill — never truncated). "full": use `title` exactly as given
+   *  (the homepage composes its own brand-first title, e.g. "{practiceName} | Veterinary Care"). */
+  titleTemplate?: "page" | "full";
+  noindex?: boolean;
+  schemaGraph?: Record<string, any>[]; // page-specific nodes, see Skeleton-Build-Spec.md §9
+  /** Merged into this page's WebPage node, e.g. { "@type": "AboutPage" } or { mainEntity: { "@id": "#service" } }. */
+  webPage?: Record<string, any>;
+  /** Breadcrumb label for this page (defaults to `title`); false = no breadcrumb. */
+  breadcrumb?: string | false;
+}
+
+const { title, description, canonical, ogImage, ogImageAlt, ogType, titleTemplate = "page", noindex, schemaGraph, webPage, breadcrumb } = Astro.props;
+const site = await getSiteInfo();
+
+// Title: see the Props doc comment above for the two modes.
+const finalTitle = (() => {
+  if (titleTemplate === "full") return title;
+  const withSuffix = `${title} | ${site.practiceName}`;
+  return withSuffix.length <= 60 ? withSuffix : title;
+})();
+
+// Astro.site always resolves — astro.config.mjs sets it from site.ts's `url`
+// field, which ships with a non-empty placeholder — but the type is still
+// `URL | undefined`, so fall back defensively rather than assert it away.
+const siteOrigin = Astro.site ?? new URL("https://example.com");
+const toAbsolute = (path: string) => new URL(path, siteOrigin).href;
+
+// Canonical: auto-derived from the current request path unless a page opts
+// out. No page needs to pass this in normal use.
+const canonicalUrl = canonical ?? toAbsolute(Astro.url.pathname);
+
+// OG/Twitter image: a page's own cover image (blog post, service) if given,
+// else the sitewide placeholder — see public/og-default.png (swap that file
+// in place per client; no code change needed, per direct instruction).
+// A collection page's cover (ImageMetadata) is cropped to the 1200×630
+// social-card size as a JPEG instead of sharing the raw full-size photo.
+const ogCrop = ogImage && typeof ogImage !== "string"
+  ? await getImage({ src: ogImage, width: 1200, height: 630, fit: "cover", format: "jpg", quality: 80 })
+  : undefined;
+const resolvedOgImage = toAbsolute(ogCrop?.src ?? (typeof ogImage === "string" ? ogImage : "/og-default.png"));
+const ogImageSize = ogCrop || !ogImage ? { width: 1200, height: 630 } : undefined;
+const resolvedOgImageAlt = ogImageAlt ?? (ogImage ? undefined : site.practiceName);
+
+// Preview build: SITE_URL (astro.config.mjs) points the build at a host other
+// than the production domain, e.g. the workers.dev address before DNS moves.
+// Keep it out of search results; robots.txt disallows it too.
+const isPreviewBuild = !!site.url && siteOrigin.origin !== new URL(site.url).origin;
+
+// theme-color: read --main straight out of tokens.css (via Vite's ?raw
+// import above) so it always matches the current brand palette with zero
+// duplication — never hard-code a hex here. --main is Tier 1 (see
+// tokens.css), always a literal hex, never a var() reference, so a plain
+// regex is enough; no need for the fuller resolver in scripts/lib/palette.mjs.
+const themeColor = tokensRaw.match(/--main:\s*(#[0-9a-fA-F]{3,8})/)?.[1];
+
+// Description: every page ships with SOME description — real per-page copy
+// is a launch-time content task (see Plan.md §8, B1), not something to
+// generate here, but a page shipping with none at all is a worse default.
+const finalDescription =
+  description?.trim() || `${site.practiceName} — compassionate veterinary care${site.cityState ? ` in ${site.cityState}` : ""}.`;
+
+// JSON-LD: site-wide nodes (WebSite, Business — see lib/schema/organization.ts)
+// + this page's WebPage + BreadcrumbList + the page's own nodes, with every
+// short @id made absolute. A page's nodes reference {"@id": "#business"} etc.
+// without re-declaring org info.
+const breadcrumbNode = breadcrumb === false ? undefined : buildBreadcrumb(Astro.url.pathname, breadcrumb || title, siteOrigin);
+const webPageNode = {
+  "@type": "WebPage",
+  "@id": "#webpage",
+  url: canonicalUrl,
+  name: finalTitle,
+  description: finalDescription,
+  isPartOf: { "@id": "#website" },
+  about: { "@id": "#business" },
+  primaryImageOfPage: { "@type": "ImageObject", url: resolvedOgImage },
+  inLanguage: "en-US",
+  ...(breadcrumbNode ? { breadcrumb: { "@id": "#breadcrumb" } } : {}),
+  ...(webPage || {}),
+};
+const graph = normalizeIds(
+  [...(await getSiteSchemaNodes(siteOrigin)), webPageNode, ...(breadcrumbNode ? [breadcrumbNode] : []), ...(schemaGraph || [])],
+  siteOrigin,
+  canonicalUrl
+);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preload" href={interLatin400} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={interLatin700} as="font" type="font/woff2" crossorigin />
+    <SeoHead
+      title={finalTitle}
+      description={finalDescription}
+      canonical={canonicalUrl}
+      ogImage={resolvedOgImage}
+      ogImageWidth={ogImageSize?.width}
+      ogImageHeight={ogImageSize?.height}
+      ogImageAlt={resolvedOgImageAlt}
+      ogType={ogType}
+      themeColor={themeColor}
+      noindex={noindex || isPreviewBuild}
+    />
+    <SchemaGraph graph={graph} />
+    <MotionLayer />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <Header />
+    <main id="main-content">
+      <slot />
+    </main>
+    <Footer />
+    <MobileCallbar />
+
+    <Modal id="contact-modal">
+      <GravityFormEmbed formId="contact" context="modal" heading="Contact Us" />
+    </Modal>
+    <ReputationWidget />
+    <AccessibilityWidget />
+
+    <style is:global>
+      :root { box-sizing: border-box; }
+      *, *::before, *::after { box-sizing: inherit; }
+      body { margin: 0; font-family: var(--font-body); color: var(--text); line-height: 1.5; }
+      img { max-width: 100%; height: auto; display: block; }
+      /* Base typography + focus — token-driven so re-skinning never touches components.
+         :where() keeps specificity at zero so any component rule still wins. Sections on
+         dark backgrounds (Hero, PageHeaderBanner, CtaBand) set color: inherit on their
+         headings; a new dark section must do the same. */
+      :where(h1, h2, h3, h4, h5, h6) { color: var(--heading); font-family: var(--font-heading); }
+      :where(a) { color: var(--main); }
+      :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+      /* No top padding here (2026-09-08) — the header is fixed+transparent
+         by default (see Header.astro), so Hero/PageHeaderBanner need to
+         render full-bleed behind it, not pushed below it. Each of those
+         self-manages a top padding of var(--header-height) internally so
+         their own content still clears the header while their background
+         extends up to the viewport edge. Every page opens with one of the
+         two (404 included) — a page that didn't would render its content
+         under the fixed header. */
+      main { padding-block-start: 0; padding-block-end: 0; }
+      @media (max-width: 900px) { main { padding-block-end: var(--callbar-height); } }
+      body.has-open-modal { overflow: hidden; }
+
+      .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+      .skip-link { position: absolute; inset-inline-start: -999px; inset-block-start: 0; z-index: 200; background: var(--main); color: var(--on-main); padding: var(--space-sm) var(--space-md); }
+      .skip-link:focus { inset-inline-start: 0; }
+    </style>
+  </body>
+</html>

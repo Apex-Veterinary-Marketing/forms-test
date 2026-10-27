@@ -1,0 +1,18 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHeaderBanner from "../components/PageHeaderBanner.astro";
+import GravityFormEmbed from "../components/GravityFormEmbed.astro";
+import LocationSection from "../components/LocationSection.astro";
+---
+
+<BaseLayout title="Contact Us" description="Get in touch with our team.">
+  <PageHeaderBanner heading="Contact Us" />
+  <div class="page-section">
+    <GravityFormEmbed formId="contact" context="contact" heading="Send Us a Message" />
+  </div>
+  <LocationSection />
+</BaseLayout>
+
+<style>
+  .page-section { max-width: 40rem; margin-inline: auto; padding: var(--space-xl) var(--space-md); }
+</style>

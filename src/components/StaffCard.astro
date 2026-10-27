@@ -1,0 +1,28 @@
+---
+// CMS-powered. Listing-page card (e.g. Meet the Team). Staff's real
+// Webflow schema has no bioShort (see content.config.ts) so this card
+// shows position instead, generalized from the staff detail page's real
+// image/name pattern (detail_staff.html). See Skeleton-Build-Spec.md §6.
+import { Image } from "astro:assets";
+import type { CollectionEntry } from "astro:content";
+
+export interface Props {
+  staffMember: CollectionEntry<"staff">;
+}
+const { staffMember } = Astro.props;
+---
+
+<a class="staff-card" href={`/staff/${staffMember.id}`}>
+  {staffMember.data.image && (
+    <Image src={staffMember.data.image} alt={staffMember.data.imageAltText || staffMember.data.name} class="staff-card__image" />
+  )}
+  <h3 class="staff-card__name">{staffMember.data.name}</h3>
+  {staffMember.data.position && <p class="staff-card__position">{staffMember.data.position}</p>}
+</a>
+
+<style>
+  .staff-card { display: flex; flex-direction: column; gap: var(--space-sm); text-decoration: none; color: inherit; }
+  .staff-card__image { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: var(--radius-md); }
+  .staff-card__name { margin: 0; font-size: var(--font-size-md); }
+  .staff-card__position { margin: 0; font-size: var(--font-size-sm); color: var(--text-muted); }
+</style>

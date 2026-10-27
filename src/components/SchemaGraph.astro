@@ -1,0 +1,17 @@
+---
+// Renders a JSON-LD @graph block. Nodes should link back to the site's
+// Business/Person nodes by @id reference rather than duplicating org info
+// per page — see Skeleton-Build-Spec.md §9.
+// Every "<" is written as its JSON unicode escape, backslash + "u003c"
+// (2026-10-11): auto-published blog titles reach this block, and a literal
+// "</script>" in one would end the tag early. JSON parsers read the escape
+// back as "<", so the structured data is unchanged.
+export interface Props {
+  graph: Record<string, any>[];
+}
+const { graph } = Astro.props;
+const json = JSON.stringify({ "@context": "https://schema.org", "@graph": graph }).replace(/</g, "\\u003c");
+---
+{graph && graph.length > 0 && (
+  <script type="application/ld+json" is:inline set:html={json} />
+)}

@@ -1,0 +1,169 @@
+---
+// Generalized from the real V2 Webflow export's footer.html: accordion
+// columns (native <details>/<summary>, zero JS) that collapse only on
+// mobile.
+//
+// Restructured 2026-09-17 back toward the real export's actual 5-column
+// layout (About us / Services / Dental Care / Surgery / Resources) —
+// previously Skeleton had generalized Dental/Surgery away into one
+// dynamic "Services" column (see git history); direct instruction to
+// restore the dedicated per-category columns. Dental/Surgery are matched
+// by category id ("dental"/"surgery" — Skeleton's own example category
+// slugs, the same ones services-categories/[slug].astro already routes
+// on) rather than hardcoded names, and each column disappears gracefully
+// if a client doesn't have that category (getServiceCategoryBySlug
+// returns undefined) — same "only render what's configured" pattern as
+// ReputationWidget's review links. "Services" (general) lists every
+// service NOT in Dental or Surgery, so a client's Wellness Care (or any
+// future third category) still surfaces somewhere.
+//
+// About Us column also absorbed what used to be its own "Follow Us"
+// column — logo, ~160-char footerAbout blurb, the existing About Us
+// links, then the social icons — direct instruction, freeing up the
+// column slot the Dental/Surgery split needed.
+import { getSiteInfo } from "../lib/data/site";
+import { getServiceCategoryBySlug } from "../lib/data/serviceCategories";
+import { getAllServices, getServicesByCategory } from "../lib/data/services";
+import { getAllSocialLinks } from "../lib/data/socialLinks";
+import { SOCIAL_ICON_CLASSES, SOCIAL_LABELS } from "../lib/icons/social";
+import { BLOG_BASE } from "../lib/data/blog";
+import ReviewsBand from "./ReviewsBand.astro";
+
+const site = await getSiteInfo();
+const socialLinks = await getAllSocialLinks();
+const year = new Date().getFullYear();
+
+const DEDICATED_CATEGORY_IDS = ["dental", "surgery"];
+const [dentalCategory, surgeryCategory] = await Promise.all(
+  DEDICATED_CATEGORY_IDS.map((id) => getServiceCategoryBySlug(id))
+);
+const [dentalServices, surgeryServices, allServices] = await Promise.all([
+  dentalCategory ? getServicesByCategory("dental") : Promise.resolve([]),
+  surgeryCategory ? getServicesByCategory("surgery") : Promise.resolve([]),
+  getAllServices(),
+]);
+const generalServices = allServices.filter(
+  (service) => !service.data.serviceCategory.some((ref) => DEDICATED_CATEGORY_IDS.includes(ref.id))
+);
+---
+
+<footer class="footer">
+  {/* Fixed-position floating pill (desktop only) — not in-flow footer content, see ReviewsBand.astro. */}
+  <ReviewsBand />
+
+  <div class="footer__grid">
+    <details class="footer__column footer__column--about" open>
+      <summary class="footer__column-title">About Us</summary>
+      <div class="footer__about">
+        {site.logoWhite || site.logoColor ? (
+          <img class="footer__logo" src={site.logoWhite || site.logoColor} alt={site.practiceName} />
+        ) : (
+          <span class="footer__logo-text">{site.practiceName}</span>
+        )}
+        {site.footerAbout && <p class="footer__about-text">{site.footerAbout}</p>}
+        <ul class="footer__link-list">
+          <li><a href="/meet-the-team">Meet the Team</a></li>
+          <li><button type="button" class="footer__link-button" data-modal-target="reputation-widget">How'd We Do?</button></li>
+          <li><a href="/photo-gallery">Photo Gallery</a></li>
+        </ul>
+        <div class="footer__social-icons">
+          {socialLinks.map((social) => (
+            <a
+              class="footer__social-icon"
+              href={social.data.link}
+              aria-label={SOCIAL_LABELS[social.data.icon]}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <i class={SOCIAL_ICON_CLASSES[social.data.icon]} aria-hidden="true"></i>
+            </a>
+          ))}
+        </div>
+      </div>
+    </details>
+
+    <details class="footer__column" open>
+      <summary class="footer__column-title">Services</summary>
+      <ul class="footer__link-list">
+        {generalServices.map((service) => (
+          <li><a href={`/services/${service.id}`}>{service.data.customName || service.data.name}</a></li>
+        ))}
+        <li><a href="/services"><strong>All Services</strong></a></li>
+      </ul>
+    </details>
+
+    {dentalCategory && (
+      <details class="footer__column" open>
+        <summary class="footer__column-title">{dentalCategory.data.name}</summary>
+        <ul class="footer__link-list">
+          {dentalServices.map((service) => (
+            <li><a href={`/services/${service.id}`}>{service.data.customName || service.data.name}</a></li>
+          ))}
+        </ul>
+      </details>
+    )}
+
+    {surgeryCategory && (
+      <details class="footer__column" open>
+        <summary class="footer__column-title">{surgeryCategory.data.name}</summary>
+        <ul class="footer__link-list">
+          {surgeryServices.map((service) => (
+            <li><a href={`/services/${service.id}`}>{service.data.customName || service.data.name}</a></li>
+          ))}
+        </ul>
+      </details>
+    )}
+
+    <details class="footer__column" open>
+      <summary class="footer__column-title">Resources</summary>
+      <ul class="footer__link-list">
+        <li><a href="/faq">FAQs</a></li>
+        <li><a href="/online-forms">Online Forms</a></li>
+        <li><a href={BLOG_BASE}>Our Blog</a></li>
+        <li><a href="/privacy-policy">Privacy Policy</a></li>
+        <li><a href="/terms-of-use">Terms of Use</a></li>
+      </ul>
+    </details>
+  </div>
+
+  <div class="footer__bottom">
+    <p class="footer__copyright">&copy; {year} {site.practiceName}. All rights reserved.</p>
+    <a class="footer__signature" href="https://veterinarymarketing.com/" target="_blank" rel="noopener noreferrer">
+      Made with &hearts; by Veterinary Marketing
+    </a>
+  </div>
+</footer>
+
+<style>
+  .footer { background: var(--footer-bg); color: var(--footer-text); padding-block-start: var(--space-xl); }
+  .footer__grid { max-width: var(--container-max); margin-inline: auto; padding-inline: var(--space-md); display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: var(--space-lg); }
+  .footer__column { border-block-end: 1px solid var(--footer-border); padding-block-end: var(--space-sm); }
+  .footer__column-title { font-weight: 600; font-size: var(--font-size-md); color: var(--footer-heading); cursor: default; padding-block: var(--space-xs); }
+  .footer__link-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-xs); margin-block-start: var(--space-sm); }
+  .footer__link-list a, .footer__link-button { color: inherit; text-decoration: none; background: none; border: 0; font: inherit; padding: 0; text-align: start; cursor: pointer; }
+  .footer__link-list a:hover, .footer__link-button:hover { text-decoration: underline; }
+
+  .footer__about { display: flex; flex-direction: column; gap: var(--space-sm); margin-block-start: var(--space-sm); }
+  .footer__logo { max-width: 9rem; max-height: 3rem; width: auto; height: auto; object-fit: contain; }
+  .footer__logo-text { font-weight: 700; font-size: 1.1rem; color: var(--footer-heading); }
+  .footer__about-text { margin: 0; font-size: var(--font-size-sm); opacity: 0.85; line-height: 1.5; }
+  .footer__about .footer__link-list { margin-block-start: 0; }
+
+  .footer__social-icons { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+  .footer__social-icon { color: inherit; display: inline-flex; font-size: 1.4rem; opacity: 0.85; }
+  .footer__social-icon:hover { opacity: 1; }
+
+  .footer__bottom { max-width: var(--container-max); margin-inline: auto; padding: var(--space-lg) var(--space-md); margin-block-start: var(--space-lg); border-block-start: 1px solid var(--footer-border); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-sm); font-size: var(--font-size-sm); }
+  .footer__signature { color: inherit; opacity: 0.8; text-decoration: none; }
+
+  @media (min-width: 900px) {
+    .footer__column summary { pointer-events: none; }
+    .footer__column summary::marker,
+    .footer__column summary::-webkit-details-marker { display: none; content: ""; }
+  }
+
+  @media (max-width: 899px) {
+    .footer__grid { grid-template-columns: 1fr; }
+    .footer__column-title { cursor: pointer; }
+  }
+</style>

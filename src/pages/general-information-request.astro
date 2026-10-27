@@ -1,0 +1,29 @@
+---
+// Includes an id="hours" anchor section so links like
+// /general-information-request/#hours behave the same way the real V2
+// export's /general-information-request/#GIR-Hours callbar link did.
+// See Skeleton-Build-Spec.md §5/§6.
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHeaderBanner from "../components/PageHeaderBanner.astro";
+import GravityFormEmbed from "../components/GravityFormEmbed.astro";
+import { getSiteInfo } from "../lib/data/site";
+
+const site = await getSiteInfo();
+---
+
+<BaseLayout title="General Information Request" description="General information and contact request.">
+  <PageHeaderBanner heading="General Information" />
+  <div class="page-section">
+    {site.hours && (
+      <div id="hours" class="page-section__hours">
+        <h2>Hours</h2>
+        <div set:html={site.hours} />
+      </div>
+    )}
+    <GravityFormEmbed formId="general-information-request" context="general-info" heading="Request Information" />
+  </div>
+</BaseLayout>
+
+<style>
+  .page-section { max-width: 40rem; margin-inline: auto; padding: var(--space-xl) var(--space-md); display: flex; flex-direction: column; gap: var(--space-xl); }
+</style>

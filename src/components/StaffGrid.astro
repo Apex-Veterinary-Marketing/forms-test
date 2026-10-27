@@ -1,0 +1,18 @@
+---
+// CMS-powered. See Skeleton-Build-Spec.md §6.
+import StaffCard from "./StaffCard.astro";
+import type { CollectionEntry } from "astro:content";
+
+export interface Props {
+  staff: CollectionEntry<"staff">[];
+}
+const { staff } = Astro.props;
+---
+
+<div class="staff-grid">
+  {staff.map((staffMember) => <StaffCard staffMember={staffMember} />)}
+</div>
+
+<style>
+  .staff-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: var(--space-lg); }
+</style>

@@ -1,0 +1,22 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHeaderBanner from "../components/PageHeaderBanner.astro";
+import GravityFormEmbed from "../components/GravityFormEmbed.astro";
+import Section from "../components/Section.astro";
+import BeforeYourVisit from "../components/BeforeYourVisit.astro";
+import { visitTips } from "../data/visit-tips";
+---
+
+<BaseLayout title="Request an Appointment" description="Book an appointment for your pet.">
+  <PageHeaderBanner heading="Request an Appointment" />
+  <Section tone="soft">
+    <BeforeYourVisit tips={visitTips} />
+  </Section>
+  <div class="page-section">
+    <GravityFormEmbed formId="appointment-request" context="appointment" heading="Appointment Request" />
+  </div>
+</BaseLayout>
+
+<style>
+  .page-section { max-width: 40rem; margin-inline: auto; padding: var(--space-xl) var(--space-md); }
+</style>

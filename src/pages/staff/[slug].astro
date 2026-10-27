@@ -1,0 +1,62 @@
+---
+// CMS-powered staff detail. Grounded in the real V2 export's
+// detail_staff.html: identical .doctors-flex structure to
+// detail_doctors.html except ONE image (no secondaryImage, no
+// rounded-corners on the export's plain staff image) and no bioShort —
+// matches Staff's schema being a strict subset of Doctors' (content.config.ts).
+// Page-specific markup, sibling of /doctors/[slug].astro — see Progress.md
+// 2026-09-02 and Plan.md §8.
+import { Image } from "astro:assets";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PageHeaderBanner from "../../components/PageHeaderBanner.astro";
+import { getAllStaff, getStaffBySlug } from "../../lib/data/staff";
+
+export async function getStaticPaths() {
+  const staff = await getAllStaff();
+  return staff.map((staffMember) => ({ params: { slug: staffMember.id }, props: { staffMember } }));
+}
+
+const { staffMember } = Astro.props;
+const heading = staffMember.data.name;
+
+const graph = [
+  {
+    "@type": "Person",
+    "@id": "#person",
+    name: heading,
+    jobTitle: staffMember.data.position || undefined,
+    worksFor: { "@id": "#business" },
+  },
+];
+---
+
+<BaseLayout title={heading} description={staffMember.data.position} schemaGraph={graph}>
+  <PageHeaderBanner heading={heading} />
+
+  <div class="general-section">
+    <div class="doctors-flex">
+      <div class="doctors-flex__images">
+        {staffMember.data.image && (
+          <Image src={staffMember.data.image} alt={staffMember.data.imageAltText || heading} class="doctors-flex__image" />
+        )}
+      </div>
+      <div class="doctors-flex__content">
+        <p class="doctors-flex__eyebrow">Meet</p>
+        <h2 class="doctors-flex__heading">{heading}</h2>
+        {staffMember.data.position && <p class="doctors-flex__position">{staffMember.data.position}</p>}
+        {staffMember.data.bio && <div class="content-rt" set:html={staffMember.data.bio} />}
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .general-section { max-width: var(--container-max); margin-inline: auto; padding: var(--space-xl) var(--space-md); }
+  .doctors-flex { display: flex; flex-wrap: wrap; gap: var(--space-xl); align-items: flex-start; }
+  .doctors-flex__images { flex: 1 1 20rem; }
+  .doctors-flex__image { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--radius-md); }
+  .doctors-flex__content { flex: 2 1 24rem; }
+  .doctors-flex__eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: var(--font-size-sm); color: var(--main); margin: 0 0 var(--space-2xs); }
+  .doctors-flex__heading { margin: 0 0 var(--space-xs); }
+  .doctors-flex__position { margin: 0 0 var(--space-md); color: var(--text-muted); font-weight: 600; }
+</style>

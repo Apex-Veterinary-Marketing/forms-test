@@ -1,0 +1,179 @@
+/*
+ * DESIGN TOKENS — the single source of truth for every visual value.
+ *
+ * RULES (enforced by `npm run check:tokens`, see AGENTS.md):
+ *   1. Component/page CSS never contains a literal color, and never writes
+ *      `var(--token, fallback)`. Every value comes from this file.
+ *   2. If a design needs a value that has no token, ADD the token here
+ *      (with a one-line comment saying what it is for), then use it.
+ *   3. Per-client re-skinning edits TIER 1 ONLY (plus fonts). Tiers 2-3 are
+ *      structure and normally stay as they are.
+ *
+ * Values below are the REFERENCE/EXAMPLE palette (a navy + teal brand), not
+ * a default look to keep — replace Tier 1 per client from their logo.
+ *
+ * ---------------------------------------------------------------------------
+ * TIER 1 — BASE COLLECTION
+ * A 1:1 mirror of the Webflow variable collection named "Base" (same 18
+ * variables, same names in kebab-case: Webflow "Main Soft O50" is
+ * --main-soft-o50). Hex only (#RRGGBB, or #RRGGBBAA for translucent) — the
+ * same rule the agency's `webflow-prelaunch-colors` skill enforces — so a
+ * Webflow palette pastes straight in and vice-versa.
+ *
+ * How the palette is built (why the values relate the way they do):
+ *   - ONE HUE FAMILY. --main-dark / --main / --main-soft / --main-light and
+ *     the three backgrounds all share the brand hue (here ~216deg) and vary
+ *     only in lightness/saturation. Tinting every neutral with the brand hue
+ *     is what makes a site feel designed rather than assembled.
+ *   - --cta is the ONE action color and sits apart from the navy family.
+ *   - Translucent tokens are siblings of a solid token, same RGB:
+ *     --main-o50 = --main @50%, --main-soft-o50 = --main-soft @50%,
+ *     --white-o85 = --white @85%, --base-bg = the translucent twin of
+ *     --solid-bg.
+ *
+ * GENERATING A PALETTE (do this — don't hand-pick Tier 1 values):
+ *   npm run palette -- --main "#<logo main>" --cta "#<logo accent>" --write
+ * It builds every Tier 1 value from those two colors and ADJUSTS lightness
+ * where needed so all text/background pairings pass WCAG AA (main/cta shade
+ * rules = the agency's webflow-prelaunch-colors skill; the additions —
+ * text, text-muted, solid-bg, base-bg, alt-bg — are documented in
+ * scripts/lib/generate.mjs). `npm run check:tokens` enforces the same rules,
+ * and `npm run test:palette` proves the generator passes them for thousands
+ * of random brand colors.
+ */
+:root {
+  /* --- Neutrals & text --------------------------------------------------- */
+  --white: #ffffff; /* page/card surface; text on dark */
+  --text: #333333; /* body copy */
+  --text-muted: #606f87; /* captions, meta, placeholders — brand hue, always
+                      visibly lighter than --text, AA on every light bg */
+  --light-grey: #d1d1d1; /* neutral borders/dividers */
+
+  /* --- Backgrounds (very soft, brand-tinted) ----------------------------- */
+  --solid-bg: #f3f5f8; /* soft section/card/hover background (opaque) */
+  --base-bg: #e8ecf17a; /* same tint @48% — for layering over images/other bgs */
+  --alt-bg: #1f304bcc; /* dark brand tint @80% — dark section over an image/pattern
+                          (white text stays AA even over a white page) */
+
+  /* --- Brand ------------------------------------------------------------- */
+  --main: #16253c; /* primary brand; headings, links, primary buttons */
+  --main-dark: #070c13; /* darkest brand; footer bg, deep sections, hovers */
+  --main-light: #385f99; /* lighter brand; accents, focus ring, link hover */
+  --main-soft: #394b65; /* muted brand; subtle fills, borders on dark */
+  --cta: #008484; /* the action color: primary CTA buttons (white text is AA on it) */
+  --cta-hover: #00191a; /* CTA hover/pressed */
+
+  /* --- Translucent siblings & effects ------------------------------------ */
+  --white-o85: #ffffffd9; /* white @85% — text on dark, glass panels */
+  --main-o50: #16253c80; /* --main @50% — image scrims, tinted overlays */
+  --main-soft-o50: #394b6580; /* --main-soft @50% */
+  --overlay-color: #00000080; /* black @50% — modal/hero scrim */
+  --shadow: #0000001a; /* black @10% — the shadow COLOR (see --shadow-* below) */
+
+  /*
+   * -------------------------------------------------------------------------
+   * TIER 2 — SEMANTIC ROLES
+   * Names for jobs the Base collection doesn't name. Each maps to a Tier 1
+   * token by default. Re-point these (not the components) to change a role.
+   * ---------------------------------------------------------------------- */
+  --heading: var(--main); /* h1-h6 color */
+  --on-main: var(--white); /* text/icons on --main surfaces */
+  --on-cta: var(--white); /* text/icons on --cta buttons. The generator sets this
+                            to --main-dark instead when the brand accent is too
+                            light for white text. */
+  --focus-ring: var(--main-light); /* :focus-visible outline color */
+
+  /* Header state (JS toggles .is-scrolled; Header.astro re-points these) */
+  --header-bg: transparent;
+  --header-fg: var(--white);
+
+  /* Footer */
+  --footer-bg: var(--main-dark);
+  --footer-text: var(--white-o85);
+  --footer-heading: var(--white);
+  --footer-border: var(--main-soft);
+
+  /*
+   * -------------------------------------------------------------------------
+   * TIER 3 — SCALES (non-color). One value per name, used everywhere.
+   * ---------------------------------------------------------------------- */
+  /* Spacing */
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 3rem;
+  --space-2xl: 4rem;
+
+  /* Type */
+  --font-body: "Inter", system-ui, sans-serif; /* loaded by styles/fonts.css — per-client: swap both, see that file */
+  --font-heading: var(--font-body);
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1.1rem;
+  --font-size-lg: 1.25rem;
+  --font-size-3xl: 2.25rem;
+  --font-size-4xl: 2.75rem;
+
+  /* Radius */
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  /* Shadows — all built from the Base --shadow color */
+  --shadow-header: 0 1px 4px var(--shadow);
+  --shadow-card: 0 1px 6px var(--shadow);
+  --shadow-dropdown: 0 4px 12px var(--shadow);
+  --shadow-float: 0 2px 8px var(--shadow), 0 1px 3px var(--shadow); /* floating widgets: pills, raised call button */
+  --shadow-callbar: 0 -2px 8px var(--shadow); /* bar pinned to the bottom edge (shadow points up) */
+
+  /* Containers */
+  --container-max: 75rem;
+  --container-max-narrow: 48rem;
+
+  /*
+   * Layout — dimensions other components depend on. Change here, not inline.
+   * (Breakpoints can't be variables inside @media; they are the literals
+   * 900px (nav/callbar switch) and 767px (narrow) — see AGENTS.md.)
+   */
+  --header-height: 6.5rem; /* fixed header incl. utility bar; heroes pad by this */
+  --callbar-height: 5.5rem; /* mobile call bar; BaseLayout pads <main> by this */
+  --logo-height: 2.5rem;
+  --page-header-height: 16rem; /* PageHeaderBanner min-height */
+  --reviews-pill-left: 5.5em; /* ReviewsBand offset, sits right of the a11y button */
+
+  /*
+   * -------------------------------------------------------------------------
+   * MOTION — used by src/styles/motion.css and any component transition.
+   * Timings taken from the real V2.5 build (0.15s / 0.2s / 0.3s were its
+   * actual transition durations). Reduced-motion is handled globally in
+   * motion.css — never re-implement it per component.
+   * ---------------------------------------------------------------------- */
+  --motion-duration-fast: 150ms; /* small state changes: color, opacity */
+  --motion-duration-base: 200ms; /* hovers, toggles (the V2.5 default) */
+  --motion-duration-slow: 300ms; /* larger hovers, menus, modals */
+  --motion-duration-reveal: 600ms; /* scroll-reveal entrance */
+  --motion-ease: cubic-bezier(0.4, 0, 0.2, 1); /* in-out; state changes */
+  --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* decelerate; entrances */
+  --motion-distance: 1.5rem; /* how far reveals travel */
+  --motion-stagger: 80ms; /* delay step between staggered siblings */
+
+  /*
+   * -------------------------------------------------------------------------
+   * THIRD-PARTY BRAND COLORS — fixed by the platforms, NOT part of the
+   * client palette. Never re-skin these; they exist so component CSS has
+   * no literal colors.
+   * ---------------------------------------------------------------------- */
+  --brand-google: #eb4335;
+  --brand-facebook: #1877f2;
+  --brand-yelp: #d32323;
+  --star: #f5a623; /* review-star gold */
+
+  /* Fixed utility colors — same reasoning as the brand colors above: a
+     warning should read as "something needs attention" regardless of the
+     client's palette, so this is NOT derived from --main/--cta. */
+  --color-warning: #92400e; /* amber-800ish — warning text/icon */
+  --color-warning-bg: #fef3c7; /* amber-100ish — warning background */
+  --color-warning-code-bg: #00000014; /* black @8% — inline <code> highlight inside a warning */
+}

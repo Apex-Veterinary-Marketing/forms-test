@@ -1,0 +1,30 @@
+---
+// Used by service-detail FAQs (services.faqs) and the site FAQ page.
+// Native <details>/<summary> — zero JS, same accessible pattern as Footer.
+// See Skeleton-Build-Spec.md §6 and §10 ("LLM data" — Q&A-shaped content).
+export interface Props {
+  faqs: { question: string; answer: string }[];
+  heading?: string;
+}
+const { faqs, heading } = Astro.props;
+---
+
+{faqs.length > 0 && (
+  <div class="faq-accordion">
+    {heading && <h2 class="faq-accordion__heading">{heading}</h2>}
+    {faqs.map((faq) => (
+      <details class="faq-accordion__item">
+        <summary class="faq-accordion__question">{faq.question}</summary>
+        <div class="faq-accordion__answer" set:html={faq.answer} />
+      </details>
+    ))}
+  </div>
+)}
+
+<style>
+  .faq-accordion { display: flex; flex-direction: column; gap: var(--space-sm); }
+  .faq-accordion__heading { margin: 0 0 var(--space-sm); }
+  .faq-accordion__item { border: 1px solid var(--light-grey); border-radius: var(--radius-sm); padding: var(--space-sm) var(--space-md); }
+  .faq-accordion__question { cursor: pointer; font-weight: 600; }
+  .faq-accordion__answer { margin-block-start: var(--space-sm); color: var(--text-muted); }
+</style>

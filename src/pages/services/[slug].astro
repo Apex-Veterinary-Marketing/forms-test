@@ -1,0 +1,143 @@
+---
+// CMS-powered service detail. contentBlocks render as simple alternating
+// image/text blocks (generic — contentBlocks has no per-block heading, so
+// this doesn't reuse FeatureSplit, which expects one); a block with
+// style: "cta" renders as the closing booking block. Schema follows
+// Skeleton-Build-Spec.md §9: Service node always, FAQPage only when
+// faqs.length > 0, manualSchema merged in (append-only, never replacing).
+import { Image } from "astro:assets";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PageHeaderBanner from "../../components/PageHeaderBanner.astro";
+import FaqAccordion from "../../components/FaqAccordion.astro";
+import CtaBand from "../../components/CtaBand.astro";
+import ServicesSidebar from "../../components/ServicesSidebar.astro";
+import { getAllServices } from "../../lib/data/services";
+import { getServiceCategoryBySlug } from "../../lib/data/serviceCategories";
+import { getSiteInfo } from "../../lib/data/site";
+import { unlinkScheduledArticles } from "../../lib/data/blog";
+import { stripHtml } from "../../lib/utils/stripHtml";
+import { withTrackingPhone } from "../../lib/utils/phone";
+
+export async function getStaticPaths() {
+  const services = await getAllServices();
+  return services.map((service) => ({ params: { slug: service.id }, props: { service } }));
+}
+
+const { service } = Astro.props;
+const site = await getSiteInfo();
+const heading = service.data.customName || service.data.name;
+
+// Rich text: tel: links dial the tracking number, and links to scheduled
+// (unpublished) blog posts render as plain text until the post is live.
+const clean = async (html: string) => withTrackingPhone(await unlinkScheduledArticles(html), site);
+const blocks = await Promise.all(service.data.contentBlocks.map(async (b) => ({ ...b, body: await clean(b.body) })));
+const faqs = await Promise.all(service.data.faqs.map(async (f) => ({ ...f, answer: await clean(f.answer) })));
+
+const categories = await Promise.all(
+  service.data.serviceCategory.map((ref) => getServiceCategoryBySlug(ref.id))
+);
+const areas = (site.serviceAreaOfCoverage || "").split(",").map((s) => s.trim()).filter(Boolean);
+
+const graph: Record<string, any>[] = [
+  {
+    "@type": "Service",
+    "@id": "#service",
+    name: heading,
+    description: service.data.metaDescription || service.data.featuredText || undefined,
+    category: categories.filter(Boolean).map((c) => c!.data.name),
+    url: new URL(`/services/${service.id}`, Astro.site).href,
+    image: service.data.pageHeaderImage ? new URL(service.data.pageHeaderImage.src, Astro.site).href : undefined,
+    provider: { "@id": "#business" },
+    areaServed: areas.length ? areas.map((name) => ({ "@type": "City", name })) : undefined,
+  },
+];
+
+if (faqs.length > 0) {
+  graph.push({
+    "@type": "FAQPage",
+    "@id": "#faq",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: { "@type": "Answer", text: stripHtml(faq.answer) },
+    })),
+  });
+}
+
+if (service.data.manualSchema) {
+  try {
+    const parsed = JSON.parse(service.data.manualSchema);
+    graph.push(...(Array.isArray(parsed) ? parsed : [parsed]));
+  } catch {
+    // Malformed manualSchema shouldn't break the build — see §9 (escape hatch, append-only).
+  }
+}
+---
+
+<BaseLayout
+  title={service.data.metaTitle || heading}
+  description={service.data.metaDescription}
+  ogImage={service.data.pageHeaderImage}
+  ogImageAlt={`${heading} at ${site.practiceName}`}
+  schemaGraph={graph}
+  webPage={{ mainEntity: { "@id": "#service" } }}
+  breadcrumb={heading}
+>
+  <PageHeaderBanner heading={heading} image={service.data.pageHeaderImage} />
+
+  <div class="services-layout">
+    <div class="service-detail">
+      {categories.length > 0 && (
+        <p class="service-detail__categories">
+          {categories.filter(Boolean).map((c) => c!.data.name).join(" · ")}
+        </p>
+      )}
+
+      {service.data.featured && service.data.featuredHeading && (
+        <div class="service-detail__featured">
+          <h2>{service.data.featuredHeading}</h2>
+          {service.data.featuredText && <p>{service.data.featuredText}</p>}
+        </div>
+      )}
+
+      {blocks.map((block, i) =>
+        block.style === "cta" ? (
+          <div class="service-cta">
+            <div class="service-cta__body services-content-rt" set:html={block.body} />
+            {site.bookingUrl && <a class="service-cta__button" href={site.bookingUrl}>{site.bookingLabel || "Book Now"}</a>}
+          </div>
+        ) : (
+          <div class:list={["service-content-block", i % 2 === 1 && "service-content-block--reverse"]}>
+            {block.image && (
+              <div class="service-content-block__media">
+                <Image src={block.image} alt="" class="service-content-block__image" />
+              </div>
+            )}
+            <div class="service-content-block__body services-content-rt" set:html={block.body} />
+          </div>
+        )
+      )}
+
+      {faqs.length > 0 && <FaqAccordion faqs={faqs} heading={`${heading}: Frequently Asked Questions`} />}
+    </div>
+
+    <ServicesSidebar activeCategoryId={categories[0]?.id} activeServiceId={service.id} />
+  </div>
+
+  <CtaBand heading={`Ready to book ${heading}?`} />
+</BaseLayout>
+
+<style>
+  .services-layout { max-width: var(--container-max); margin-inline: auto; padding: var(--space-xl) var(--space-md); display: flex; gap: var(--space-xl); align-items: flex-start; flex-wrap: wrap; }
+  .service-detail { flex: 1 1 30rem; display: flex; flex-direction: column; gap: var(--space-xl); }
+  .service-detail__categories { text-transform: uppercase; letter-spacing: 0.06em; font-size: var(--font-size-sm); color: var(--main); }
+  .service-detail__featured { background: var(--solid-bg); border-radius: var(--radius-md); padding: var(--space-lg); }
+  .service-content-block { display: flex; flex-wrap: wrap; gap: var(--space-lg); align-items: center; }
+  .service-content-block--reverse { flex-direction: row-reverse; }
+  .service-content-block__media { flex: 1 1 18rem; }
+  .service-content-block__image { width: 100%; height: auto; border-radius: var(--radius-md); }
+  .service-content-block__body { flex: 2 1 24rem; }
+  .service-cta { background: var(--solid-bg); border-radius: var(--radius-md); padding: var(--space-lg); }
+  .service-cta__button { display: inline-block; margin-block-start: var(--space-md); padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-sm); background: var(--cta); color: var(--on-cta); text-decoration: none; font-weight: 600; }
+  .service-cta__button:hover { background: var(--cta-hover); }
+</style>

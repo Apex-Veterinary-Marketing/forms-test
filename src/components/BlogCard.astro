@@ -1,0 +1,32 @@
+---
+// CMS-powered. Generic/token-driven; not grounded in a staged real-markup
+// reference. See Skeleton-Build-Spec.md §6.
+import { Image } from "astro:assets";
+import type { CollectionEntry } from "astro:content";
+import { postHref } from "../lib/data/blog";
+
+export interface Props {
+  post: CollectionEntry<"blog">;
+}
+const { post } = Astro.props;
+---
+
+<a class="blog-card" href={postHref(post)}>
+  {post.data.postThumbnail && <Image src={post.data.postThumbnail} alt={post.data.thumbnailAlt || ""} class="blog-card__image" />}
+  <div class="blog-card__body">
+    {post.data.monthLabel && <span class="blog-card__date">{post.data.monthLabel}</span>}
+    <h3 class="blog-card__heading">{post.data.name}</h3>
+    {post.data.postSummary && <p class="blog-card__summary">{post.data.postSummary}</p>}
+    <span class="blog-card__cta">Read More</span>
+  </div>
+</a>
+
+<style>
+  .blog-card { display: flex; flex-direction: column; text-decoration: none; color: inherit; background: var(--white); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-card); }
+  .blog-card__image { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+  .blog-card__body { padding: var(--space-md); display: flex; flex-direction: column; gap: var(--space-xs); }
+  .blog-card__date { font-size: var(--font-size-sm); color: var(--text-muted); }
+  .blog-card__heading { margin: 0; font-size: var(--font-size-md); }
+  .blog-card__summary { margin: 0; color: var(--text-muted); font-size: var(--font-size-sm); }
+  .blog-card__cta { margin-block-start: auto; font-weight: 600; color: var(--main); }
+</style>

@@ -1,0 +1,30 @@
+---
+// CMS-powered. Listing-page card (e.g. Meet the Team). Not grounded in a
+// staged real-markup reference (meet-the-team.html wasn't part of the
+// export files read for this build) — generalized from the doctor detail
+// page's real image/name/bio pattern (detail_doctors.html) into a compact
+// card. Revisit against real markup if/when meet-the-team.html is read.
+// See Skeleton-Build-Spec.md §6.
+import { Image } from "astro:assets";
+import type { CollectionEntry } from "astro:content";
+
+export interface Props {
+  doctor: CollectionEntry<"doctors">;
+}
+const { doctor } = Astro.props;
+---
+
+<a class="doctor-card" href={`/doctors/${doctor.id}`}>
+  {doctor.data.mainImage && (
+    <Image src={doctor.data.mainImage} alt={doctor.data.imageAltText || doctor.data.name} class="doctor-card__image" />
+  )}
+  <h3 class="doctor-card__name">{doctor.data.shortName || doctor.data.name}</h3>
+  {doctor.data.bioShort && <p class="doctor-card__bio" set:html={doctor.data.bioShort} />}
+</a>
+
+<style>
+  .doctor-card { display: flex; flex-direction: column; gap: var(--space-sm); text-decoration: none; color: inherit; }
+  .doctor-card__image { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: var(--radius-md); }
+  .doctor-card__name { margin: 0; font-size: var(--font-size-md); }
+  .doctor-card__bio { margin: 0; font-size: var(--font-size-sm); color: var(--text-muted); }
+</style>

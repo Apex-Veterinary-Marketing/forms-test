@@ -1,0 +1,31 @@
+---
+// With no published posts yet (a new site before its first automated post),
+// the page shows a "coming soon" note instead of an empty grid.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PageHeaderBanner from "../../components/PageHeaderBanner.astro";
+import BlogGrid from "../../components/BlogGrid.astro";
+import { getAllPosts } from "../../lib/data/blog";
+
+const posts = await getAllPosts();
+---
+
+<BaseLayout title="Our Blog" description="News and articles from our practice.">
+  <PageHeaderBanner heading="Our Blog" />
+  <div class="page-section">
+    {posts.length > 0 ? (
+      <BlogGrid posts={posts} />
+    ) : (
+      <div class="blog-coming-soon">
+        <h2 class="blog-coming-soon__heading">New articles coming soon</h2>
+        <p class="blog-coming-soon__text">We're putting together pet care tips and news from our team. Check back soon.</p>
+      </div>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  .page-section { max-width: var(--container-max); margin-inline: auto; padding: var(--space-xl) var(--space-md); }
+  .blog-coming-soon { max-width: var(--container-max-narrow); margin-inline: auto; padding: var(--space-xl) var(--space-lg); text-align: center; background: var(--solid-bg); border-radius: var(--radius-lg); }
+  .blog-coming-soon__heading { margin: 0 0 var(--space-sm); color: var(--heading); font-family: var(--font-heading); }
+  .blog-coming-soon__text { margin: 0; color: var(--text-muted); }
+</style>

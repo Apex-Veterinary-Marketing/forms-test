@@ -1,0 +1,84 @@
+---
+// UserWay accessibility-navigation widget (agency-standard on every client
+// site). Defaults to the agency's own company-wide UserWay account
+// (E6izlREqK3) — override per client via site.ts's userwayAccountId only if
+// a specific client needs their own separate UserWay account. Mounted once,
+// site-wide, from BaseLayout.
+//
+// Positioning (2026-09-08, real visual refs ref1.jpg/ref2.jpg):
+// - Desktop: fixed bottom-left. ReviewsBand's floating pill (also fixed,
+//   see ReviewsBand.astro) sits immediately to its right, both at the same
+//   bottom offset — coordinate any position change with that component.
+// - Mobile/tablet (≤900px, matches MobileCallbar's breakpoint): the
+//   third-party widget button can't be reparented into MobileCallbar's DOM
+//   (its script mounts it as a body child), so it's repositioned via fixed
+//   coordinates to visually land in MobileCallbar's reserved 5th grid
+//   column instead — raised the same way the callbar's circular call
+//   button is.
+import { getSiteInfo } from "../lib/data/site";
+
+const AGENCY_USERWAY_ACCOUNT_ID = "E6izlREqK3";
+
+const site = await getSiteInfo();
+const accountId = site.userwayAccountId || AGENCY_USERWAY_ACCOUNT_ID;
+---
+
+<script type="text/javascript" is:inline define:vars={{ accountId }}>
+  var _userway_config = {
+    position: "1",
+    size: "small",
+    mobile: true,
+    account: accountId,
+  };
+</script>
+<script type="text/javascript" src="https://cdn.userway.org/widget.js" is:inline></script>
+<style is:global>
+  /* UserWay's own stylesheet applies a corner-positioning transform
+     (translateX by its own width) alongside left/right — left uncanceled,
+     it stacks with our left/right override and pushes the button
+     off-screen. Reset it so our left/bottom (or left/transform, on mobile)
+     are the only positioning in effect. */
+
+  /* Explicit 50x50 size — the agency's own override snippet only ever
+     specified position, not size (UserWay's "size: small" config renders
+     ~64x64 on its own), so this is a deliberate fixed size to keep the
+     button visually matched to ReviewsBand's 50px-tall pill. */
+
+  /* Desktop: bottom-left corner. ReviewsBand's pill picks up immediately
+     to the right of this — see its --reviews-pill-left. */
+  body .uwy.userway_p1 .userway_buttons_wrapper {
+    top: auto !important;
+    right: auto !important;
+    left: 1em !important;
+    bottom: 1.5rem !important;
+    transform: none !important;
+    width: 50px !important;
+    height: 50px !important;
+  }
+
+  /* Mobile/tablet: land in MobileCallbar's reserved 5th column (last 1/5 of
+     the viewport width, center ≈ 90%), vertically centered to match the
+     callbar's circular call button's own center. Value below (-2.96rem)
+     was derived 2026-09-08 against the call circle's size/raise at the
+     time and re-verified after that circle's positioning mechanism was
+     later reworked off position:absolute onto a flex + negative-margin
+     approach (see MobileCallbar.astro) — the circle's rendered center
+     barely moved (<0.5px, confirmed via getBoundingClientRect), so this
+     offset didn't need updating. If the call circle's size/raise changes
+     again, re-verify this against its new center the same way — don't
+     assume the box-model math transfers, MobileCallbar's own comment
+     explains why it doesn't hold cleanly there.
+     If the call circle's size/raise ever changes again, recompute this
+     the same way rather than eyeballing it. */
+  @media (max-width: 900px) {
+    body .uwy.userway_p1 .userway_buttons_wrapper {
+      top: auto !important;
+      left: 90% !important;
+      right: auto !important;
+      bottom: calc(var(--callbar-height) - 2.96rem) !important;
+      transform: translateX(-50%) !important;
+      width: 50px !important;
+      height: 50px !important;
+    }
+  }
+</style>

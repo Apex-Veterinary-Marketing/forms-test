@@ -1,0 +1,61 @@
+# Publishes a blog post from a GitHub issue (docs/BLOG-POST-CONTRACT.md → Publishing flow).
+# The content automation opens an issue (a ```json block of post fields, then "## Body"
+# and the Markdown); scripts/publish-from-issue.mjs validates it, writes the post and its
+# image, runs check:posts + the site's own build (npm run build), commits to main and
+# reports back on the issue.
+# Cloudflare deploys the push. Edit a failed issue to retry.
+#
+# SHARED FILE: byte-identical in every Skeleton site. Change it in the template
+# (skeleton-master-astro) and copy it; never edit it in a site repo.
+#
+# Security: issue fields reach Node only through env:, never inside run:. Only issue
+# authors listed in the org variable BLOG_PUBLISHERS are processed; anything else exits
+# without a comment. Image hosts come from the org variable BLOG_IMAGE_HOSTS.
+name: Publish blog post from issue
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+
+permissions:
+  contents: write
+  issues: write
+
+# One run at a time per issue: a newer edit replaces a queued one, never a running one.
+# Different issues run side by side; the script rebases and retries if main moved.
+# (A repo-wide group would let a third queued post cancel the second without a comment.)
+concurrency:
+  group: blog-publish-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    # Coarse pre-filter; the script re-checks the
+    # author exactly against BLOG_PUBLISHERS.
+    if: >-
+      github.event.issue.state == 'open' &&
+      vars.BLOG_PUBLISHERS != '' &&
+      contains(vars.BLOG_PUBLISHERS,
+               github.event.issue.user.login) &&
+      contains(github.event.issue.body, '```json')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Publish post
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          BLOG_PUBLISHERS: ${{ vars.BLOG_PUBLISHERS }}
+          BLOG_IMAGE_HOSTS: ${{ vars.BLOG_IMAGE_HOSTS }}
+        run: node scripts/publish-from-issue.mjs

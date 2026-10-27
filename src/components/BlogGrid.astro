@@ -1,0 +1,18 @@
+---
+// CMS-powered. See Skeleton-Build-Spec.md §6.
+import BlogCard from "./BlogCard.astro";
+import type { CollectionEntry } from "astro:content";
+
+export interface Props {
+  posts: CollectionEntry<"blog">[];
+}
+const { posts } = Astro.props;
+---
+
+<div class="blog-grid">
+  {posts.map((post) => <BlogCard post={post} />)}
+</div>
+
+<style>
+  .blog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: var(--space-lg); }
+</style>

@@ -1,0 +1,105 @@
+/*
+ * MOTION LAYER — opt-in, design-neutral animation primitives.
+ *
+ * Nothing here changes a page until an element opts in with a data
+ * attribute, so a client design decides WHERE motion happens; this file
+ * decides HOW (timings/easing come from the --motion-* tokens in
+ * tokens.css — never write a literal duration or cubic-bezier).
+ *
+ *   Scroll reveal   <section data-reveal>               fade + rise (default)
+ *                   data-reveal="up|down|left|right|fade|scale"
+ *                   data-reveal-delay="200"             extra delay, ms
+ *                   <ul data-reveal-stagger>            parent: its
+ *                     <li data-reveal>…                   [data-reveal] children
+ *                   data-reveal-stagger="120"           enter one after another
+ *                                                       (optional ms step)
+ *   Hover / focus   data-hover="lift|scale|underline"
+ *   Entrance        data-animate="fade|pop"             plays when rendered
+ *
+ * Behaviour is wired by src/components/MotionLayer.astro (mounted once in
+ * BaseLayout). See AGENTS.md → "Motion layer" for the rules.
+ *
+ * Safety nets, all in this file / MotionLayer:
+ *   - Reveal only hides content under html.motion-ready, which is set by an
+ *     inline script — no JS means everything stays visible.
+ *   - html.motion-failsafe (set if the controller never boots) un-hides all.
+ *   - prefers-reduced-motion: reduce disables every animation/transition
+ *     site-wide (block at the bottom). Do not re-implement per component.
+ *   - After an element has revealed, the controller REMOVES its
+ *     data-reveal attribute, so no leftover transform/transition/will-change
+ *     can fight hover styles or create a containing block for fixed children.
+ *     (Don't put data-reveal on an ancestor of a position:fixed element.)
+ */
+
+/* ---- 1. Scroll reveal -------------------------------------------------- */
+.motion-ready [data-reveal] {
+  --reveal-from: translate3d(0, var(--motion-distance), 0);
+  /* Per-element defaults; MotionLayer overrides these inline for stagger/delay.
+     Set here (not inherited) so a nested [data-reveal] never picks up its
+     parent's index/delay. */
+  --reveal-index: 0;
+  --reveal-delay: 0ms;
+  opacity: 0;
+  transform: var(--reveal-from);
+  transition:
+    opacity var(--motion-duration-reveal) var(--motion-ease-out),
+    transform var(--motion-duration-reveal) var(--motion-ease-out);
+  transition-delay: calc(var(--reveal-index) * var(--motion-stagger) + var(--reveal-delay));
+  will-change: opacity, transform;
+}
+.motion-ready [data-reveal="down"] { --reveal-from: translate3d(0, calc(var(--motion-distance) * -1), 0); }
+.motion-ready [data-reveal="left"] { --reveal-from: translate3d(calc(var(--motion-distance) * -1), 0, 0); }
+.motion-ready [data-reveal="right"] { --reveal-from: translate3d(var(--motion-distance), 0, 0); }
+.motion-ready [data-reveal="fade"] { --reveal-from: translate3d(0, 0, 0); }
+.motion-ready [data-reveal="scale"] { --reveal-from: scale(0.94); }
+.motion-ready [data-reveal].is-revealed { opacity: 1; transform: none; }
+
+/* Controller never booted (JS error, blocked script): show everything. */
+.motion-failsafe [data-reveal] { opacity: 1 !important; transform: none !important; transition: none !important; }
+
+/* ---- 2. Hover / focus utilities (pointer devices only) ------------------ */
+@media (hover: hover) {
+  [data-hover] {
+    transition:
+      transform var(--motion-duration-base) var(--motion-ease),
+      box-shadow var(--motion-duration-base) var(--motion-ease);
+  }
+  [data-hover="lift"]:hover,
+  [data-hover="lift"]:focus-visible { transform: translateY(-0.25rem); box-shadow: var(--shadow-dropdown); }
+  [data-hover="scale"]:hover,
+  [data-hover="scale"]:focus-visible { transform: scale(1.04); }
+
+  /* Animated underline (the V2.5 nav-link line effect). Inline links only. */
+  [data-hover="underline"] {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0 2px;
+    transition: background-size var(--motion-duration-slow) var(--motion-ease);
+  }
+  [data-hover="underline"]:hover,
+  [data-hover="underline"]:focus-visible { background-size: 100% 2px; }
+}
+
+/* ---- 3. Entrance keyframes ---------------------------------------------- */
+@keyframes motion-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes motion-pop {
+  from { opacity: 0; transform: translateY(0.5rem) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+[data-animate="fade"] { animation: motion-fade-in var(--motion-duration-slow) var(--motion-ease-out) both; }
+[data-animate="pop"] { animation: motion-pop var(--motion-duration-slow) var(--motion-ease-out) both; }
+
+/* ---- 4. Reduced motion — global, authoritative -------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .motion-ready [data-reveal] { opacity: 1; transform: none; transition: none; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}

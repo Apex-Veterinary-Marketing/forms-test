@@ -1,0 +1,33 @@
+# build output
+dist/
+# generated types
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+
+# environment variables
+.env
+.env.production
+
+# macOS-specific files
+.DS_Store
+
+# jetbrains setting folder
+.idea/
+
+# Cloudflare wrangler local state
+.wrangler/
+
+# Client source material (copy docs, intake exports) — never commit it.
+# Keep it in client-docs/ at the repo root (loose .docx/.pdf in the root too).
+/client-docs/
+/*.docx
+/*.pdf

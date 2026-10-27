@@ -1,0 +1,35 @@
+{
+  "name": "skeleton",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "palette": "node scripts/generate-palette.mjs",
+    "check:tokens": "node scripts/check-tokens.mjs",
+    "test:palette": "node scripts/test-palette.mjs",
+    "check:links": "node scripts/check-links.mjs",
+    "check:posts": "node scripts/check-posts.mjs",
+    "test:publish": "node --test scripts/publish-from-issue.test.mjs",
+    "check:launch": "node scripts/check-launch.mjs",
+    "verify": "astro check && npm run check:posts && npm run test:publish && npm run check:tokens && npm run test:palette && astro build && npm run check:links"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.4",
+    "@fontsource/inter": "^5.3.0",
+    "astro": "^7.2.10"
+  },
+  "allowScripts": {
+    "esbuild": true
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "js-yaml": "^4.3.2",
+    "typescript": "^6.0.3"
+  }
+}

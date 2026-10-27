@@ -1,0 +1,39 @@
+---
+// Interior-page header/banner variant of Hero. Grounded in the real V2
+// export's .page-header pattern (services.html, detail pages): a heading
+// over a background image with a dark overlay. Image is optional so pages
+// render sensibly (solid token-driven background) before real per-client
+// imagery exists. See Skeleton-Build-Spec.md §6.
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+
+export interface Props {
+  heading: string;
+  eyebrow?: string;
+  image?: ImageMetadata;
+  imageAlt?: string;
+}
+const { heading, eyebrow, image, imageAlt = "" } = Astro.props;
+---
+
+<div class="page-header-banner">
+  {image && <Image src={image} alt={imageAlt} class="page-header-banner__image" />}
+  <div class="page-header-banner__overlay"></div>
+  <div class="page-header-banner__content">
+    {eyebrow && <p class="page-header-banner__eyebrow">{eyebrow}</p>}
+    <h1 class="page-header-banner__heading">{heading}</h1>
+  </div>
+</div>
+
+<style>
+  /* padding-block-start includes --header-height (2026-09-08) so this
+     renders full-bleed behind the fixed, transparent-by-default header
+     (see Header.astro / BaseLayout.astro) instead of being pushed below
+     it — content still clears the header, the dark bg/overlay doesn't. */
+  .page-header-banner { position: relative; display: flex; align-items: center; justify-content: center; min-height: var(--page-header-height); background: var(--main-dark); overflow: hidden; text-align: center; padding: var(--space-lg); padding-block-start: calc(var(--header-height) + var(--space-lg)); }
+  .page-header-banner__image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+  .page-header-banner__overlay { position: absolute; inset: 0; background: var(--overlay-color); z-index: 1; }
+  .page-header-banner__content { position: relative; z-index: 2; color: var(--on-main); max-width: 48rem; }
+  .page-header-banner__eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: var(--font-size-sm); margin: 0 0 var(--space-xs); opacity: 0.85; }
+  .page-header-banner__heading { margin: 0; color: inherit; font-size: var(--font-size-3xl); }
+</style>

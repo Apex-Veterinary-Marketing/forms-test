@@ -1,0 +1,68 @@
+---
+// Generic section-background primitive — added 2026-09-21 (audit item A7)
+// so the four background tones every client design needs have one shared
+// place to live, instead of each page hand-rolling its own wrapper. Grounded
+// in the real V2.5 export's `.general-section` + `gray-bg`/`light-blue-bg`/
+// `dark-color-bg` modifiers (template-v2-5-*.css): those map to `soft`,
+// (an accent tint — not reproduced here, --main-soft already has a job
+// elsewhere) and `dark` below. `alt` has no direct analog in the static
+// export — it exists for the V2.55 tone that needs an actual background
+// image to make sense (a translucent dark scrim OVER a photo, not a flat
+// fill); until a real image is set behind it (client content, not yet
+// wired anywhere — see Plan.md item A4) it just renders as a plain dark
+// navy fill, which is a correct but unremarkable preview of it.
+//
+// NOT a wrapper for components that already manage their own background —
+// Hero, PageHeaderBanner, CtaBand, FeatureSplit, LocationSection all have
+// more specific layout needs and stay self-contained. Use Section for
+// plain content blocks that just need a container width + a tone.
+export interface Props {
+  tone?: "default" | "soft" | "dark" | "alt";
+  narrow?: boolean; // container-max-narrow instead of container-max
+}
+const { tone = "default", narrow = false } = Astro.props;
+---
+
+<section class:list={["section", tone !== "default" && `section--${tone}`]}>
+  <div class:list={["section__inner", narrow && "section__inner--narrow"]}>
+    <slot />
+  </div>
+</section>
+
+<style>
+  .section { padding-block: var(--space-xl); }
+  .section__inner { max-width: var(--container-max); margin-inline: auto; padding-inline: var(--space-md); }
+  .section__inner--narrow { max-width: var(--container-max-narrow); }
+
+  .section--soft { background: var(--solid-bg); }
+  .section--dark { background: var(--main-dark); }
+  .section--alt { background: var(--alt-bg); }
+
+  /* dark/alt set color once on the section root; plain text inherits it for
+     free, but headings and links each carry their OWN color rule elsewhere
+     in the site (BaseLayout's global `:where(h1..h6){color:var(--heading)}`,
+     `:where(a){color:var(--main)}`) that would otherwise beat inheritance —
+     that's the exact gotcha AGENTS.md documents for Hero/PageHeaderBanner/
+     CtaBand, each fixed by hand on its OWN heading class. Section instead
+     fixes it once for WHATEVER gets slotted in.
+     MUST use :global() on the descendant part: Astro's scoped styles don't
+     reach content passed through <slot/> at all (slotted markup keeps its
+     PARENT's scope hash, never the child component's) — a plain scoped
+     `.section--dark h2 {}` here silently matches nothing. Confirmed by
+     testing: without :global() the slotted <h2> measured var(--heading)
+     (navy) despite this rule; with it, on-main white, verified via
+     getComputedStyle. The `.section--dark`/`.section--alt` ancestor part
+     stays scoped correctly since it targets THIS component's own root. */
+  /* Headings/links need this because a global rule elsewhere sets their
+     color explicitly (see above). Form controls need it for an unrelated
+     reason: browsers' own UA stylesheet gives button/input/select/textarea
+     an explicit `color: buttontext`-equivalent that does NOT inherit like a
+     normal element's — confirmed empirically too (TestimonialSlider's
+     prev/next buttons measured plain black on the dark tone before this
+     line existed). Same fix either way: force `color: inherit` back on. */
+  .section--dark, .section--alt { color: var(--on-main); }
+  .section--dark :global(:is(h1, h2, h3, h4, h5, h6, a, button, input, select, textarea)),
+  .section--alt :global(:is(h1, h2, h3, h4, h5, h6, a, button, input, select, textarea)) {
+    color: inherit;
+  }
+</style>

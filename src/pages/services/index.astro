@@ -1,0 +1,28 @@
+---
+// ServicesSidebar mounted 2026-09-17 (direct instruction: every
+// services-related page always carries it). No active category here —
+// this page browses everything.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PageHeaderBanner from "../../components/PageHeaderBanner.astro";
+import ServiceGrid from "../../components/ServiceGrid.astro";
+import ServicesSidebar from "../../components/ServicesSidebar.astro";
+import { getAllServices } from "../../lib/data/services";
+import bannerGeneric from "../../assets/banner-generic.png";
+
+const services = await getAllServices();
+---
+
+<BaseLayout title="Our Services" description="Explore our full range of veterinary services.">
+  <PageHeaderBanner heading="Veterinary Services" image={bannerGeneric} />
+  <div class="services-layout">
+    <div class="page-section">
+      <ServiceGrid services={services} />
+    </div>
+    <ServicesSidebar />
+  </div>
+</BaseLayout>
+
+<style>
+  .services-layout { max-width: var(--container-max); margin-inline: auto; padding: var(--space-xl) var(--space-md); display: flex; gap: var(--space-xl); align-items: flex-start; flex-wrap: wrap; }
+  .page-section { flex: 1 1 30rem; }
+</style>

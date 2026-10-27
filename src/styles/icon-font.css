@@ -1,0 +1,67 @@
+/*
+ * Agency icon font (IcoMoon export, provided 2026-09-08 — see
+ * Skeleton-Build-Spec.md §6). Font files live in public/fonts/icomoon.*.
+ * Class names/codepoints below are copied verbatim from the real
+ * style.css that shipped with the export — don't renumber or rename
+ * these, they're tied to the compiled font's glyph table.
+ *
+ * Color is controlled the normal text way (`color` on the icon element or
+ * an ancestor) — glyphs are just font characters, no currentColor/fill
+ * wiring needed the way SVG icons require.
+ *
+ * Currently used: the six icon-social-* classes, via
+ * src/lib/icons/social.ts's SOCIAL_ICON_CLASSES map (Header/Footer). The
+ * rest (arrows, calendar/hours, call, check, location, mail, star, paw)
+ * aren't wired into any component yet — real replacements for
+ * MobileCallbar's placeholder inline-SVG icons if that's ever wanted, not
+ * done here since only the social set was asked for this pass.
+ */
+@font-face {
+  font-family: "icomoon";
+  src:
+    url("/fonts/icomoon.ttf") format("truetype"),
+    url("/fonts/icomoon.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+[class^="icon-"],
+[class*=" icon-"] {
+  font-family: "icomoon" !important;
+  speak: never;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-arrow-down:before { content: "\e900"; }
+.icon-arrow-left:before { content: "\e901"; }
+.icon-arrow-right:before { content: "\e902"; }
+.icon-arrow-up:before { content: "\e903"; }
+.icon-calendar:before { content: "\e904"; }
+.icon-calendar2:before { content: "\e905"; }
+.icon-call:before { content: "\e906"; }
+.icon-check-fill:before { content: "\e907"; }
+.icon-check-outline:before { content: "\e908"; }
+.icon-check:before { content: "\e909"; }
+.icon-hours:before { content: "\e90a"; }
+.icon-location:before { content: "\e90b"; }
+.icon-mail:before { content: "\e90c"; }
+.icon-social-facebook:before { content: "\e90d"; }
+.icon-social-google:before { content: "\e90e"; }
+.icon-social-instagram:before { content: "\e90f"; }
+.icon-social-linkedin:before { content: "\e910"; }
+.icon-social-rateabiz:before { content: "\e911"; }
+.icon-social-tik-tok:before { content: "\e912"; }
+.icon-social-twitter:before { content: "\e913"; }
+.icon-social-yelp:before { content: "\e914"; }
+.icon-social-youtube:before { content: "\e915"; }
+.icon-star-empty:before { content: "\e916"; }
+.icon-star-half:before { content: "\e917"; }
+.icon-star:before { content: "\e918"; }
+.icon-paw:before { content: "\e919"; }

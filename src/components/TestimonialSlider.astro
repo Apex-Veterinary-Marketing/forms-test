@@ -1,0 +1,70 @@
+---
+// CMS-powered (testimonials collection, 2026-09-08 — was a hardcoded prop
+// array before that). Field names match the collection schema directly
+// (name/testimonial/image) rather than the earlier quote/author/source
+// naming. image is optional per testimonial — renders a circular avatar
+// above the quote when present, nothing extra when it isn't.
+// Plain vanilla JS (no framework), matching every other interactive
+// component in Skeleton. See Skeleton-Build-Spec.md §6.
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+
+export interface Props {
+  testimonials: { name: string; testimonial: string; image?: ImageMetadata; imageAltText?: string }[];
+}
+const { testimonials } = Astro.props;
+---
+
+{testimonials.length > 0 && (
+  <div class="testimonial-slider" data-testimonial-slider>
+    <div class="testimonial-slider__track">
+      {testimonials.map((t, i) => (
+        <blockquote class="testimonial-slider__slide" data-slide hidden={i !== 0}>
+          {t.image && (
+            <Image src={t.image} alt={t.imageAltText || t.name} class="testimonial-slider__image" />
+          )}
+          <p class="testimonial-slider__quote">&ldquo;{t.testimonial}&rdquo;</p>
+          <footer class="testimonial-slider__author">{t.name}</footer>
+        </blockquote>
+      ))}
+    </div>
+    {testimonials.length > 1 && (
+      <div class="testimonial-slider__controls">
+        <button type="button" class="testimonial-slider__prev" data-slider-prev aria-label="Previous testimonial">&larr;</button>
+        <button type="button" class="testimonial-slider__next" data-slider-next aria-label="Next testimonial">&rarr;</button>
+      </div>
+    )}
+  </div>
+)}
+
+<style>
+  .testimonial-slider { max-width: 40rem; margin-inline: auto; text-align: center; padding: var(--space-lg); }
+  .testimonial-slider__image { inline-size: 4rem; block-size: 4rem; border-radius: 50%; object-fit: cover; margin: 0 auto var(--space-sm); }
+  .testimonial-slider__quote { font-size: var(--font-size-lg); font-style: italic; margin: 0 0 var(--space-sm); }
+  .testimonial-slider__author { font-weight: 600; }
+  .testimonial-slider__controls { display: flex; justify-content: center; gap: var(--space-md); margin-block-start: var(--space-md); }
+  .testimonial-slider__prev, .testimonial-slider__next { background: none; border: 1px solid var(--light-grey); border-radius: 50%; width: 2.25rem; height: 2.25rem; cursor: pointer; font-size: 1rem; }
+</style>
+
+<script>
+  document.querySelectorAll("[data-testimonial-slider]").forEach((slider) => {
+    const slides = Array.from(slider.querySelectorAll("[data-slide]"));
+    if (slides.length === 0) return;
+    let current = slides.findIndex((s) => !(s as HTMLElement).hidden);
+    if (current < 0) current = 0;
+
+    function show(index: number) {
+      slides.forEach((s, i) => {
+        if (s instanceof HTMLElement) s.hidden = i !== index;
+      });
+      current = index;
+    }
+
+    slider.querySelector("[data-slider-prev]")?.addEventListener("click", () => {
+      show((current - 1 + slides.length) % slides.length);
+    });
+    slider.querySelector("[data-slider-next]")?.addEventListener("click", () => {
+      show((current + 1) % slides.length);
+    });
+  });
+</script>

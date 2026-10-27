@@ -1,0 +1,71 @@
+---
+// Owns the surrounding spacing/heading; Gravity Forms owns the actual form
+// markup via the client's own embed snippet. See Skeleton-Build-Spec.md §8.
+//
+// Snippet mechanism added 2026-09-21 (audit item A1) — an iframe embed for
+// now (stage 1); a native form UI on the Gravity Forms REST API is the
+// confirmed next stage, not built yet — see src/data/forms.ts for the full
+// explanation and Ideas.md idea #2. This component just renders whichever
+// of the 3 states applies: real snippet / detected bare-shortcode mistake
+// (the likely real mistake when pasting from the GF admin) / still-empty
+// placeholder.
+import { gravityFormEmbeds } from "../data/forms";
+
+export interface Props {
+  formId: string; // key into src/data/forms.ts's gravityFormEmbeds map
+  context?: "contact" | "appointment" | "general-info" | "modal" | "reputation";
+  heading?: string;
+}
+const { formId, context, heading } = Astro.props;
+// GF's embed code comes protocol-relative (src="//…") or occasionally
+// http://; force https so the iframe never depends on the page's scheme.
+const snippet = gravityFormEmbeds[formId]?.trim().replace(/\b(src|href)="(?:https?:)?\/\//g, '$1="https://');
+// A bare WordPress shortcode (e.g. `[gravityform id="1"]`) is the likely
+// real mistake here — it renders nothing outside WordPress's own PHP
+// pipeline. Detect it and say so, instead of silently showing broken
+// bracket text with no explanation.
+const looksLikeBareShortcode = !!snippet && /^\[gravityform\b/i.test(snippet);
+---
+<div class:list={["form-embed", context && `form-embed--${context}`]}>
+  {heading && <h2 class="form-embed__heading">{heading}</h2>}
+  {snippet && !looksLikeBareShortcode ? (
+    <div class="form-embed__body" data-gravity-form-id={formId} set:html={snippet} />
+  ) : looksLikeBareShortcode ? (
+    <div class="form-embed__body form-embed__warning" data-gravity-form-id={formId}>
+      <p>
+        <strong>{formId}</strong>'s entry in <code>src/data/forms.ts</code> looks like a bare WordPress shortcode
+        (<code>{snippet}</code>), which only renders inside WordPress's own pages. Paste the client's real embeddable
+        snippet instead (an <code>&lt;iframe&gt;</code> pointing at a WP page hosting that form, or their embed
+        script) — see that file's comments.
+      </p>
+    </div>
+  ) : (
+    <div class="form-embed__body form-embed__placeholder" data-gravity-form-id={formId}>
+      <p>[Gravity Forms embed: {formId} — add it to <code>src/data/forms.ts</code>]</p>
+    </div>
+  )}
+</div>
+<style>
+  .form-embed { display: flex; flex-direction: column; gap: var(--space-sm); }
+  .form-embed__heading { margin: 0; }
+  .form-embed__placeholder { border: 1px dashed var(--light-grey); padding: var(--space-md); color: var(--text-muted); font-size: var(--font-size-sm); }
+  .form-embed__warning { border: 1px solid var(--color-warning); background: var(--color-warning-bg); color: var(--color-warning); padding: var(--space-md); font-size: var(--font-size-sm); border-radius: var(--radius-sm); }
+  .form-embed__warning code { background: var(--color-warning-code-bg); padding: 0.1em 0.35em; border-radius: 2px; }
+</style>
+
+<script>
+  // A <script> tag that arrives via set:html (or any innerHTML-style
+  // assignment) is inert — browsers only execute script elements created
+  // through the DOM API, not ones parsed from an HTML string. Most real GF
+  // embeds are a plain <iframe> and need nothing here, but if a client's
+  // snippet is a JS-widget loader instead, this makes it actually run:
+  // re-create each script tag via createElement/appendChild and swap it in.
+  document.querySelectorAll<HTMLElement>("[data-gravity-form-id]").forEach((container) => {
+    container.querySelectorAll("script").forEach((old) => {
+      const fresh = document.createElement("script");
+      for (const attr of Array.from(old.attributes)) fresh.setAttribute(attr.name, attr.value);
+      fresh.textContent = old.textContent;
+      old.replaceWith(fresh);
+    });
+  });
+</script>

@@ -1,0 +1,66 @@
+---
+// Grounded in the real V2 export's .services-sidebar-2 (detail_services.html
+// / svc-long-version-template.html) — mounted on every services-related
+// page per direct instruction 2026-09-17 (the export's own sidebar only
+// appears on service detail pages; generalized here to all of them for a
+// consistent nav aid). Real export's sidebar is a flat list scoped to the
+// current service's own category; this instead groups every category into
+// its own collapsible <details> (native, zero JS — same pattern as
+// Footer's accordion columns and MobileMenu's dropdowns), matching the
+// "dropdowns by service category" instruction, heading "Other Services".
+// Respects the services schema's showOnSidebarMenu flag (defined since the
+// schema's creation, never actually consumed until this component).
+import { getAllServiceCategories } from "../lib/data/serviceCategories";
+import { getServicesByCategory } from "../lib/data/services";
+
+export interface Props {
+  // Pre-opens this category's group and skips rendering that link (the
+  // current page's own category/service shouldn't link to itself).
+  activeCategoryId?: string;
+  activeServiceId?: string;
+}
+const { activeCategoryId, activeServiceId } = Astro.props;
+
+const categories = await getAllServiceCategories();
+const groups = (
+  await Promise.all(
+    categories.map(async (category) => ({
+      category,
+      services: (await getServicesByCategory(category.id)).filter(
+        (service) => service.data.showOnSidebarMenu && service.id !== activeServiceId
+      ),
+    }))
+  )
+).filter((group) => group.services.length > 0);
+---
+
+<nav class="services-sidebar" aria-label="Other services">
+  <h2 class="services-sidebar__heading">Other Services</h2>
+  {groups.map((group) => (
+    <details class="services-sidebar__group" open={group.category.id === activeCategoryId}>
+      <summary class="services-sidebar__group-title">{group.category.data.name}</summary>
+      <ul class="services-sidebar__list">
+        {group.services.map((service) => (
+          <li><a href={`/services/${service.id}`}>{service.data.customName || service.data.name}</a></li>
+        ))}
+      </ul>
+    </details>
+  ))}
+  <a class="services-sidebar__all-link" href="/services">All Services</a>
+</nav>
+
+<style>
+  .services-sidebar { flex: 0 0 16rem; }
+  .services-sidebar__heading { margin: 0 0 var(--space-sm); font-size: var(--font-size-md); text-transform: uppercase; letter-spacing: 0.04em; }
+  .services-sidebar__group { border-block-start: 1px solid var(--light-grey); padding-block: var(--space-xs); }
+  .services-sidebar__group-title { cursor: pointer; font-weight: 600; padding-block: var(--space-xs); }
+  .services-sidebar__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-xs); margin-block-start: var(--space-xs); }
+  .services-sidebar__list a { color: inherit; text-decoration: none; }
+  .services-sidebar__list a:hover { text-decoration: underline; }
+  .services-sidebar__all-link { display: inline-block; margin-block-start: var(--space-sm); font-weight: 700; color: var(--main); text-decoration: none; }
+  .services-sidebar__all-link:hover { text-decoration: underline; }
+
+  @media (max-width: 767px) {
+    .services-sidebar { flex-basis: 100%; }
+  }
+</style>

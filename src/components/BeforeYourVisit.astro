@@ -1,0 +1,110 @@
+---
+// "Before your visit" prep tips — a grid of short cards (icon + title + body
+// + optional link) telling pet owners how to make their appointment go
+// smoothly. Reference: a real "Help, before you arrive" section supplied as
+// a screenshot (2-col x 2-row card grid, light background, corner paw-print
+// decoration) — built here as a generic, reusable, content-driven component
+// rather than a fixed 4-card block, since a client's real tips list won't
+// always be exactly four items.
+//
+// Icons reuse the shared IcoMoon font (src/styles/icon-font.css) rather than
+// adding new SVG assets — pass any of its "icon-*" class names. The font has
+// no literal "document" or "heart" glyph; src/data/visit-tips.ts's example
+// content substitutes icon-check-outline and icon-calendar2 for those two
+// rather than inventing new icon assets for a one-off.
+import type { VisitTip } from "../data/visit-tips";
+
+export interface Props {
+  heading?: string;
+  subheading?: string;
+  tips: VisitTip[];
+}
+
+const {
+  heading = "Before Your Visit",
+  subheading = "A few things that make your appointment faster and easier on your pet.",
+  tips,
+} = Astro.props;
+---
+
+<div class="before-your-visit">
+  <div class="before-your-visit__paw before-your-visit__paw--tl" aria-hidden="true"><i class="icon-paw"></i></div>
+  <div class="before-your-visit__paw before-your-visit__paw--br" aria-hidden="true"><i class="icon-paw"></i></div>
+
+  <div class="before-your-visit__head">
+    <h2 class="before-your-visit__heading">{heading}</h2>
+    {subheading && <p class="before-your-visit__subheading">{subheading}</p>}
+  </div>
+
+  <div class="before-your-visit__grid">
+    {tips.map((tip) => (
+      <div class="visit-tip">
+        <span class="visit-tip__icon" aria-hidden="true"><i class={tip.icon}></i></span>
+        <h3 class="visit-tip__title">{tip.title}</h3>
+        <p class="visit-tip__body">{tip.body}</p>
+        {tip.linkText && tip.linkHref && (
+          <a class="visit-tip__link" href={tip.linkHref}>
+            {tip.linkText} <i class="icon-arrow-right" aria-hidden="true"></i>
+          </a>
+        )}
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  .before-your-visit { position: relative; overflow: hidden; }
+
+  .before-your-visit__paw { position: absolute; font-size: 6rem; color: var(--light-grey); opacity: 0.5; pointer-events: none; z-index: 0; }
+  .before-your-visit__paw--tl { top: -1rem; left: -1rem; transform: rotate(-15deg); }
+  .before-your-visit__paw--br { bottom: -1rem; right: -1rem; transform: rotate(165deg); }
+
+  .before-your-visit__head { position: relative; z-index: 1; text-align: center; max-width: 42rem; margin-inline: auto; margin-block-end: var(--space-lg); }
+  .before-your-visit__heading { margin: 0 0 var(--space-xs); }
+  .before-your-visit__subheading { margin: 0; color: var(--text-muted); }
+
+  .before-your-visit__grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+  }
+  @media (max-width: 767px) {
+    .before-your-visit__grid { grid-template-columns: 1fr; }
+  }
+
+  .visit-tip {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2xs);
+    padding: var(--space-lg);
+    background: var(--white);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+  }
+  .visit-tip__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: var(--radius-sm);
+    background: var(--solid-bg);
+    color: var(--main);
+    font-size: 1.25rem;
+    margin-block-end: var(--space-2xs);
+  }
+  .visit-tip__title { margin: 0; font-size: var(--font-size-md); }
+  .visit-tip__body { margin: 0; color: var(--text-muted); }
+  .visit-tip__link {
+    margin-block-start: auto;
+    padding-block-start: var(--space-2xs);
+    font-weight: 600;
+    color: var(--main);
+    text-decoration: none;
+  }
+  .visit-tip__link:hover { color: var(--main-light); }
+  .visit-tip__link i { font-size: 0.75em; }
+</style>

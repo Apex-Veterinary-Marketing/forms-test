@@ -1,0 +1,45 @@
+---
+// Alternating image/content section. Generic/token-driven; not grounded in
+// a staged real-markup reference. See Skeleton-Build-Spec.md §6.
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+
+export interface Props {
+  eyebrow?: string;
+  heading: string;
+  image?: ImageMetadata;
+  imageAlt?: string;
+  ctaText?: string;
+  ctaHref?: string;
+  reverse?: boolean;
+}
+const { eyebrow, heading, image, imageAlt = "", ctaText, ctaHref, reverse = false } = Astro.props;
+---
+
+<section class:list={["feature-split", reverse && "feature-split--reverse"]}>
+  {image && (
+    <div class="feature-split__media">
+      <Image src={image} alt={imageAlt} class="feature-split__image" />
+    </div>
+  )}
+  <div class="feature-split__content">
+    {eyebrow && <p class="feature-split__eyebrow">{eyebrow}</p>}
+    <h2 class="feature-split__heading">{heading}</h2>
+    <div class="feature-split__body">
+      <slot />
+    </div>
+    {ctaText && ctaHref && <a class="feature-split__cta" href={ctaHref}>{ctaText}</a>}
+  </div>
+</section>
+
+<style>
+  .feature-split { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xl); max-width: var(--container-max); margin-inline: auto; padding: var(--space-xl) var(--space-md); }
+  .feature-split--reverse { flex-direction: row-reverse; }
+  .feature-split__media, .feature-split__content { flex: 1 1 20rem; }
+  .feature-split__image { width: 100%; height: auto; border-radius: var(--radius-lg); }
+  .feature-split__eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: var(--font-size-sm); color: var(--main); margin: 0 0 var(--space-xs); }
+  .feature-split__heading { margin: 0 0 var(--space-sm); }
+  .feature-split__body { color: var(--text-muted); }
+  .feature-split__cta { display: inline-block; margin-block-start: var(--space-md); padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-sm); background: var(--cta); color: var(--on-cta); text-decoration: none; font-weight: 600; transition: background-color var(--motion-duration-fast) var(--motion-ease); }
+  .feature-split__cta:hover { background: var(--cta-hover); }
+</style>

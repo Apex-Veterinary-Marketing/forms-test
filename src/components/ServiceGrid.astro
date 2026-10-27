@@ -1,0 +1,19 @@
+---
+// CMS-powered. Renders the services collection (or a filtered subset, e.g.
+// one category) as a grid of ServiceCard. See Skeleton-Build-Spec.md §6.
+import ServiceCard from "./ServiceCard.astro";
+import type { CollectionEntry } from "astro:content";
+
+export interface Props {
+  services: CollectionEntry<"services">[];
+}
+const { services } = Astro.props;
+---
+
+<div class="service-grid">
+  {services.map((service) => <ServiceCard service={service} />)}
+</div>
+
+<style>
+  .service-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: var(--space-lg); }
+</style>

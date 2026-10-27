@@ -1,0 +1,19 @@
+---
+// Placeholder — no dedicated gallery/images collection exists in
+// Skeleton's content model yet (out of scope per Skeleton-Build-Spec.md
+// §13). Real client photos get added per-build.
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHeaderBanner from "../components/PageHeaderBanner.astro";
+import bannerGeneric from "../assets/banner-generic.png";
+---
+
+<BaseLayout title="Photo Gallery" description="A look inside our practice.">
+  <PageHeaderBanner heading="Photo Gallery" image={bannerGeneric} />
+  <div class="page-section">
+    <p>Gallery images go here — replace with real client photos per build.</p>
+  </div>
+</BaseLayout>
+
+<style>
+  .page-section { max-width: var(--container-max); margin-inline: auto; padding: var(--space-xl) var(--space-md); }
+</style>

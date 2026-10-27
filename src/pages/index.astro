@@ -1,0 +1,99 @@
+---
+// Homepage. Not grounded in a staged real-markup reference (the V2
+// homepage export wasn't part of the files read for this build) — section
+// choice/order is a reasonable generic default (Hero → About Us → featured
+// services → Why Choose Us → testimonials → CTA → location), easy to
+// reorder per client. About Us added 2026-09-08, directly beneath Hero
+// per direct instruction. ReviewsBand no longer lives here — it's mounted
+// site-wide via Footer.astro (also 2026-09-08). Testimonials are
+// CMS-powered (testimonials collection, also 2026-09-08) rather than a
+// hardcoded prop array. See Skeleton-Build-Spec.md §5/§6.
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Hero from "../components/Hero.astro";
+import Section from "../components/Section.astro";
+import ServiceGrid from "../components/ServiceGrid.astro";
+import FeatureSplit from "../components/FeatureSplit.astro";
+import TestimonialSlider from "../components/TestimonialSlider.astro";
+import CtaBand from "../components/CtaBand.astro";
+import LocationSection from "../components/LocationSection.astro";
+import BeforeYourVisit from "../components/BeforeYourVisit.astro";
+import { getFeaturedServices } from "../lib/data/services";
+import { getSiteInfo } from "../lib/data/site";
+import { getAllTestimonials } from "../lib/data/testimonials";
+import { visitTips } from "../data/visit-tips";
+import bannerGeneric from "../assets/banner-generic.png";
+
+const site = await getSiteInfo();
+const featuredServices = await getFeaturedServices();
+const testimonials = await getAllTestimonials();
+---
+
+<BaseLayout title={`${site.practiceName} | Veterinary Care`} titleTemplate="full" description={`Compassionate veterinary care from ${site.practiceName}.`}>
+  <Hero
+    eyebrow="Welcome to"
+    heading={site.practiceName}
+    subheading="Compassionate, comprehensive care for every stage of your pet's life."
+    ctaText={site.bookingLabel || "Book Now"}
+    ctaHref={site.bookingUrl || "/contact-us"}
+    secondaryCtaText="Our Services"
+    secondaryCtaHref="/services"
+    image={bannerGeneric}
+  />
+
+  <div data-reveal>
+    <FeatureSplit heading="About Us" ctaText="Meet the Team" ctaHref="/meet-the-team">
+      <p>A short introduction to the practice goes here — replace with real client copy about who you are, how long you've served the area, and what pet owners can expect.</p>
+    </FeatureSplit>
+  </div>
+
+  {featuredServices.length > 0 && (
+    <div data-reveal>
+      <Section tone="soft">
+        <h2 class="home-heading">Our Services</h2>
+        <ServiceGrid services={featuredServices} />
+      </Section>
+    </div>
+  )}
+
+  <div data-reveal>
+    <FeatureSplit heading="Why Choose Us" ctaText="Our Services" ctaHref="/services" reverse>
+      <p>A short paragraph about the practice's approach to care goes here — replace with real client copy.</p>
+    </FeatureSplit>
+  </div>
+
+  <div data-reveal>
+    <Section tone="soft">
+      <BeforeYourVisit tips={visitTips} />
+    </Section>
+  </div>
+
+  <div data-reveal>
+    {/* dark tone, added with Section (2026-09-21) — proves the tone system's
+       heading/link contrast fix on a real page; also closes a real gap this
+       block had (every other home section has an intro heading, this
+       didn't). "alt" tone is Section's other dark option, meant for a
+       section with a real background image behind it — nothing on this
+       page needs that yet (see Plan.md item A4), so it isn't demoed here. */}
+    <Section tone="dark">
+      <h2 class="home-heading">What Our Clients Say</h2>
+      <TestimonialSlider
+        testimonials={testimonials.map((t) => ({
+          name: t.data.name,
+          testimonial: t.data.testimonial,
+          image: t.data.image,
+          imageAltText: t.data.imageAltText,
+        }))}
+      />
+    </Section>
+  </div>
+
+  <CtaBand heading="Ready to schedule a visit?" />
+
+  <div data-reveal>
+    <LocationSection />
+  </div>
+</BaseLayout>
+
+<style>
+  .home-heading { text-align: center; margin: 0 0 var(--space-lg); }
+</style>

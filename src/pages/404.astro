@@ -1,0 +1,21 @@
+---
+// Gets a PageHeaderBanner like every other page (2026-09-08) — not just for
+// consistency, the sitewide header relies on a dark hero/banner behind it
+// to render its default transparent+white-text state legibly; a page with
+// no banner would show transparent-white nav text over a plain white body.
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHeaderBanner from "../components/PageHeaderBanner.astro";
+---
+
+<BaseLayout title="Page Not Found" noindex>
+  <PageHeaderBanner heading="404" />
+  <div class="not-found">
+    <p>Sorry, we couldn't find that page.</p>
+    <a href="/">Back to Home</a>
+  </div>
+</BaseLayout>
+
+<style>
+  .not-found { max-width: 32rem; margin-inline: auto; padding: var(--space-2xl) var(--space-md); text-align: center; }
+  .not-found a { color: var(--main); font-weight: 600; }
+</style>

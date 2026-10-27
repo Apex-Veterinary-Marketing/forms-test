@@ -1,0 +1,79 @@
+---
+// Meet the Team. Section order set 2026-09-08 by direct instruction:
+// header banner, doctors grid, about-the-clinic (mission/vision/approach-
+// shaped blurbs, deliberately not labeled with those words), about-the-
+// team paragraph, staff grid. The three-blurb grid is page-specific markup
+// (not promoted to a shared component) since it's the only page that needs
+// it right now — revisit if another page wants the same pattern.
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHeaderBanner from "../components/PageHeaderBanner.astro";
+import DoctorGrid from "../components/DoctorGrid.astro";
+import StaffGrid from "../components/StaffGrid.astro";
+import { getAllDoctors } from "../lib/data/doctors";
+import { getAllStaff } from "../lib/data/staff";
+import bannerGeneric from "../assets/banner-generic.png";
+
+const doctors = await getAllDoctors();
+const staff = await getAllStaff();
+
+const clinicBlurbs = [
+  {
+    heading: "What We Stand For",
+    body: "A short paragraph on why the practice exists and what it's ultimately here to do for pets and their people goes here — replace with real client copy.",
+  },
+  {
+    heading: "Where We're Headed",
+    body: "A short paragraph on what the practice is working toward — the kind of care it wants to keep building toward over time — goes here.",
+  },
+  {
+    heading: "How We Care For Your Pet",
+    body: "A short paragraph on the practice's day-to-day philosophy of care — how appointments feel, what pet owners can expect — goes here.",
+  },
+];
+---
+
+<BaseLayout title="Meet the Team" description="Meet our doctors and staff.">
+  <PageHeaderBanner heading="Meet the Team" image={bannerGeneric} />
+
+  {doctors.length > 0 && (
+    <section class="page-section">
+      <h2>Our Doctors</h2>
+      <DoctorGrid doctors={doctors} />
+    </section>
+  )}
+
+  <section class="page-section about-clinic">
+    <h2>About Our Practice</h2>
+    <div class="about-clinic__grid">
+      {clinicBlurbs.map((blurb) => (
+        <div class="about-clinic__item">
+          <h3>{blurb.heading}</h3>
+          <p>{blurb.body}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="page-section about-staff">
+    <h2>About Our Team</h2>
+    <p class="about-staff__body">A paragraph describing the team as a whole goes here — replace with real client copy about the people behind the practice, their experience, and what pet owners can expect when they meet them.</p>
+  </section>
+
+  {staff.length > 0 && (
+    <section class="page-section">
+      <h2>Our Staff</h2>
+      <StaffGrid staff={staff} />
+    </section>
+  )}
+</BaseLayout>
+
+<style>
+  .page-section { max-width: var(--container-max); margin-inline: auto; padding: var(--space-xl) var(--space-md); }
+  .page-section + .page-section { padding-block-start: 0; }
+
+  .about-clinic__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: var(--space-lg); margin-block-start: var(--space-lg); }
+  .about-clinic__item h3 { margin: 0 0 var(--space-xs); font-size: var(--font-size-md); color: var(--main); }
+  .about-clinic__item p { margin: 0; color: var(--text-muted); }
+
+  .about-staff__body { max-width: 48rem; }
+</style>

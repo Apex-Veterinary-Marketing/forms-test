@@ -1,0 +1,28 @@
+---
+// Minimal placeholder — a real client-side or server-backed search index
+// is future work (out of scope per Skeleton-Build-Spec.md §13); this page
+// exists so the /search route resolves per the routing map (§5).
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHeaderBanner from "../components/PageHeaderBanner.astro";
+---
+
+<BaseLayout title="Search">
+  <PageHeaderBanner heading="Search" />
+  <div class="page-section">
+    <form class="search-form" role="search">
+      <label for="search-input" class="sr-only">Search</label>
+      <input id="search-input" type="search" name="q" placeholder="Search the site&hellip;" />
+      <button type="submit">Search</button>
+    </form>
+    <p class="search-note">Search results aren't wired up yet — this is a placeholder page.</p>
+  </div>
+</BaseLayout>
+
+<style>
+  .page-section { max-width: 40rem; margin-inline: auto; padding: var(--space-xl) var(--space-md); }
+  .search-form { display: flex; gap: var(--space-sm); }
+  .search-form input { flex: 1; padding: var(--space-sm); border: 1px solid var(--light-grey); border-radius: var(--radius-sm); }
+  .search-form button { padding: var(--space-sm) var(--space-lg); background: var(--cta); color: var(--on-cta); border: 0; border-radius: var(--radius-sm); cursor: pointer; transition: background-color var(--motion-duration-fast) var(--motion-ease); }
+  .search-form button:hover { background: var(--cta-hover); }
+  .search-note { color: var(--text-muted); font-size: var(--font-size-sm); margin-block-start: var(--space-md); }
+</style>

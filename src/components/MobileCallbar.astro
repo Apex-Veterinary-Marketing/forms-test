@@ -1,0 +1,148 @@
+---
+// Fixed bottom bar, mobile/tablet only — the agency's "callbar" — generalized
+// from the real V2 export's .callbar markup (icon + label per link). The
+// Hours item opens a small self-contained Modal (below) rather than
+// deep-linking to a specific page anchor, so it works the same regardless of
+// which pages a given client site ends up with.
+//
+// 5-column grid (2026-09-08 decision, real visual ref: ref2.jpg): 4 real
+// links + one reserved empty column on the right where AccessibilityWidget's
+// third-party button gets repositioned into on mobile/tablet via its own
+// fixed-position CSS (it can't be reparented into our DOM — see
+// AccessibilityWidget.astro). The Call link is a raised circular button
+// rather than a text label, matching the real callbar-phone treatment.
+//
+// Icons (2026-09-08): all four now use the agency's real IcoMoon font
+// (src/styles/icon-font.css) instead of placeholder inline SVG — Hours
+// uses icon-hours, Call uses icon-call, Contact Us uses icon-location, all
+// exact matches in the font. Our Team has no literal match in the font's
+// icon set (no "team"/"people" glyph); using icon-paw as a themed stand-in
+// until a better one exists — swap if the agency adds one. Header.astro's
+// own phone bits (utility-bar phone link, mobile-call button) stay
+// unchanged — explicitly excluded from this swap.
+// See Skeleton-Build-Spec.md §6.
+import { getSiteInfo } from "../lib/data/site";
+import Modal from "./Modal.astro";
+import { phoneHref } from "../lib/utils/phone";
+
+const site = await getSiteInfo();
+const callNumber = site.phoneNumber; // shown/announced; the link dials the tracking number
+---
+
+<div class="callbar">
+  <button type="button" class="callbar__link" data-modal-target="hours-modal">
+    <i class="callbar__icon icon-hours" aria-hidden="true"></i>
+    <span class="callbar__label">Office<br>Hours</span>
+  </button>
+
+  <a class="callbar__link" href="/meet-the-team">
+    <i class="callbar__icon icon-paw" aria-hidden="true"></i>
+    <span class="callbar__label">Our<br>Team</span>
+  </a>
+
+  {callNumber && (
+    <a class="callbar__link callbar__link--call" href={phoneHref(site)}>
+      <span class="callbar__icon-circle">
+        <i class="callbar__icon callbar__icon--call icon-call" aria-hidden="true"></i>
+      </span>
+      <span class="sr-only">Call {site.practiceName}</span>
+    </a>
+  )}
+
+  <button type="button" class="callbar__link" data-modal-target="contact-modal">
+    <i class="callbar__icon icon-location" aria-hidden="true"></i>
+    <span class="callbar__label">Contact<br>Us</span>
+  </button>
+
+  <div class="callbar__widget-slot" aria-hidden="true"></div>
+</div>
+
+<Modal id="hours-modal">
+  <h2>Hours</h2>
+  {site.hours && <div class="callbar__hours" set:html={site.hours} />}
+  {site.afterHours && (
+    <>
+      <h3>After-Hours</h3>
+      <div class="callbar__hours" set:html={site.afterHours} />
+    </>
+  )}
+</Modal>
+
+<style>
+  .callbar { display: none; }
+
+  @media (max-width: 900px) {
+    .callbar {
+      position: fixed;
+      inset-inline: 0;
+      inset-block-end: 0;
+      z-index: 40;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      align-items: end;
+      block-size: var(--callbar-height);
+      background: var(--main);
+      color: var(--on-main);
+      box-shadow: var(--shadow-callbar);
+      overflow: visible; /* lets the raised call button protrude above the bar */
+    }
+
+    .callbar__link {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+      block-size: 100%;
+      padding: var(--space-xs) var(--space-2xs) var(--space-sm);
+      color: inherit;
+      text-decoration: none;
+      background: none;
+      border: 0;
+      font: inherit;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .callbar__icon { font-size: 1.4rem; }
+    .callbar__label { font-size: var(--font-size-xs); line-height: 1.15; }
+
+    /* Raised circular call button — protrudes above the bar's top edge.
+       2026-09-08: reworked off position:absolute (wasn't actually needed —
+       flagged as unnecessary complexity). The circle is now a normal flex
+       child of .callbar__link--call, using the shared .callbar__link
+       justify-content:center + align-items:center (the standard mechanism
+       — not abspos's static-position fallback the old version relied on
+       for horizontal centering), pulled up above the bar with a negative
+       margin-block-start instead of inset-block-start against a
+       full-height relative parent.
+       margin-block-start's effect on final position isn't 1:1 — with
+       justify-content:center, a negative margin on one side only shifts
+       the centered position by roughly half its own magnitude (confirmed
+       empirically: -1rem moved the circle 8.4px, not 16px). -2.4rem here
+       was tuned the same way, reproducing the same visual target as the
+       size/raise rebalance from earlier today (circle bottom ~29px/33%
+       above the bar's own bottom edge, circle top ~13px above the bar's
+       top edge) — verified via getBoundingClientRect in an iframe test,
+       not eyeballed. If the circle's size changes again, retune
+       margin-block-start empirically the same way, not by recomputing the
+       naive box-model math (it doesn't hold here — confirmed by testing). */
+    .callbar__icon-circle {
+      flex-shrink: 0;
+      margin-block-start: -2.4rem;
+      inline-size: 4.5rem;
+      block-size: 4.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--cta);
+      box-shadow: var(--shadow-float);
+    }
+    .callbar__icon--call { font-size: 2rem; color: var(--on-cta); }
+
+    /* Reserved, empty — AccessibilityWidget's fixed-position CSS lands its
+       (third-party, not-reparentable) button over this same screen area. */
+    .callbar__widget-slot { position: relative; }
+  }
+</style>

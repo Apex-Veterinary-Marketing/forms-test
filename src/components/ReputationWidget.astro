@@ -1,0 +1,172 @@
+---
+// Rate-My-Visit-style reputation funnel, found while reading the real V2
+// export's footer markup and confirmed in scope 2026-09-01 (user: "IT
+// SHOULD HAVE IT"). Reuses Modal's overlay/focus-trap/close mechanics
+// instead of reimplementing them, and is rendered once globally (see
+// BaseLayout) — any element anywhere on the site with
+// data-modal-target="reputation-widget" opens it. See
+// Skeleton-Build-Spec.md §6.
+//
+// Visually cloned 2026-09-15 against the user's real reference
+// screenshots (reference1/2/3.png) of the live V2.5 build: the peeking
+// mascot photo (swaps neutral/happy/sad with the stage — real assets,
+// public/images/reputation/), the colored paw-shaped Like/Dislike icons
+// (paw-like.svg/paw-dislike.svg — already colored in the source file, no
+// CSS tinting needed), and the circular platform-icon treatment on the
+// review links (stays on the icon font per the earlier icon-font
+// decision, not the original's raster platform logos). Modal.astro's
+// dialog overflow was split (see that file) so this mascot can overflow
+// past the card's top edge instead of being clipped.
+import Modal from "./Modal.astro";
+import GravityFormEmbed from "./GravityFormEmbed.astro";
+import { getSiteInfo } from "../lib/data/site";
+import { REVIEW_ICON_CLASSES, REVIEW_LABELS, type ReviewPlatformKey } from "../lib/icons/social";
+
+const site = await getSiteInfo();
+const reviewLinks = (
+  [
+    site.googleReviewsLink && { platform: "google" as ReviewPlatformKey, link: site.googleReviewsLink },
+    site.facebookReviewsLink && { platform: "facebook" as ReviewPlatformKey, link: site.facebookReviewsLink },
+    site.yelpReviewLink && { platform: "yelp" as ReviewPlatformKey, link: site.yelpReviewLink },
+  ].filter(Boolean) as { platform: ReviewPlatformKey; link: string }[]
+);
+---
+
+<Modal id="reputation-widget">
+  <div class="reputation-widget" data-reputation-widget>
+    <img class="reputation-widget__mascot" data-rm-mascot="neutral" src="/images/reputation/mascot-neutral.png" alt="" />
+    <img class="reputation-widget__mascot" data-rm-mascot="happy" src="/images/reputation/mascot-happy.png" alt="" hidden />
+    <img class="reputation-widget__mascot" data-rm-mascot="sad" src="/images/reputation/mascot-sad.png" alt="" hidden />
+
+    <div class="reputation-widget__content">
+    <div class="reputation-widget__stage" data-rm-stage="prompt">
+      <h2 class="reputation-widget__heading">Tell us how we are doing?</h2>
+      <div class="reputation-widget__paws">
+        <button type="button" class="reputation-widget__paw" data-rm-action="like">
+          <img src="/images/reputation/paw-like.svg" alt="" class="reputation-widget__paw-icon" />
+          <span class="reputation-widget__paw-label">Like</span>
+        </button>
+        <button type="button" class="reputation-widget__paw" data-rm-action="dislike">
+          <img src="/images/reputation/paw-dislike.svg" alt="" class="reputation-widget__paw-icon" />
+          <span class="reputation-widget__paw-label">Dislike</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="reputation-widget__stage" data-rm-stage="positive" hidden>
+      <h2 class="reputation-widget__heading">Thank you hooman!!</h2>
+      <p class="reputation-widget__tagline">Can you please be more specific and leave us a review on your preferred platform.</p>
+      {reviewLinks.length > 0 ? (
+        <div class="reputation-widget__review-links">
+          {reviewLinks.map((r) => (
+            <a class="reputation-widget__review-link" href={r.link} target="_blank" rel="noopener noreferrer">
+              <span class={`reputation-widget__review-icon reputation-widget__review-icon--${r.platform}`}>
+                <i class={REVIEW_ICON_CLASSES[r.platform]} aria-hidden="true"></i>
+              </span>
+              <span class="reputation-widget__review-text">
+                Leave a review on <strong>{REVIEW_LABELS[r.platform]} &rarr;</strong>
+              </span>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <p class="reputation-widget__no-links">Thanks again for letting us know!</p>
+      )}
+    </div>
+
+    <div class="reputation-widget__stage" data-rm-stage="negative" hidden>
+      <h2 class="reputation-widget__heading">What can we improve?</h2>
+      <p class="reputation-widget__tagline">Please tell us what we can improve. We love to hear from our clients. Please let us know if there are any areas that you think we could improve upon.</p>
+      <GravityFormEmbed formId="reputation-feedback" context="reputation" />
+    </div>
+    </div>
+  </div>
+</Modal>
+
+<style>
+  /* The mascot peeks over the dialog's top edge with its
+     paws draping over the border. The modal body
+     normally scrolls (overflow: auto), which clipped the mascot — for this
+     modal the body is left unclipped and scrolling moves to
+     .reputation-widget__content, which wraps only the stages.
+     Geometry: the mascot images are 350×271 with the dog's flat body edge at
+     86% of the height, so at 9rem wide (≈6.97rem tall) that edge sits 6rem
+     below the image top. The modal body pads 1.5rem, so top: -7.5rem puts
+     the edge exactly on the dialog border and the paws hang over it. */
+  :global(#reputation-widget .modal__body) { overflow: visible; max-height: none; }
+  .reputation-widget {
+    position: relative;
+    padding-block-start: var(--space-lg); /* clears the paws below the border */
+    text-align: center;
+  }
+  .reputation-widget__content { max-height: calc(85vh - 6rem); overflow-y: auto; }
+  .reputation-widget__mascot {
+    position: absolute;
+    inset-block-start: -7.5rem;
+    inset-inline-start: -1.25rem;
+    inline-size: 9rem;
+    block-size: auto;
+    z-index: 2;
+    pointer-events: none;
+    animation: motion-pop var(--motion-duration-slow) var(--motion-ease-out) both;
+  }
+  .reputation-widget__mascot[hidden] { display: none; }
+  .reputation-widget__heading { margin-block-start: 0; text-transform: uppercase; font-size: 1.4rem; }
+  .reputation-widget__tagline { color: var(--text-muted); }
+
+  .reputation-widget__paws { display: flex; gap: var(--space-lg); justify-content: center; margin-block-start: var(--space-lg); }
+  .reputation-widget__paw { display: flex; flex-direction: column; align-items: center; gap: 0.5em; background: none; border: 0; font: inherit; cursor: pointer; }
+  .reputation-widget__paw-icon { width: 5rem; height: 5rem; transition: transform var(--motion-duration-base) var(--motion-ease); }
+  .reputation-widget__paw:hover .reputation-widget__paw-icon { transform: scale(1.08); }
+  .reputation-widget__paw-label { text-transform: uppercase; font-weight: 700; font-size: 0.85rem; }
+
+  .reputation-widget__review-links { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-lg); margin-block-start: var(--space-lg); }
+  .reputation-widget__review-link { display: flex; flex-direction: column; align-items: center; gap: 0.6em; width: 9rem; text-decoration: none; color: var(--heading); }
+  .reputation-widget__review-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    border-radius: 50%;
+    color: var(--white);
+    font-size: 1.8rem;
+    transition: transform var(--motion-duration-base) var(--motion-ease);
+  }
+  .reputation-widget__review-link:hover .reputation-widget__review-icon { transform: scale(1.1); }
+  .reputation-widget__review-icon--google { background: var(--brand-google); }
+  .reputation-widget__review-icon--facebook { background: var(--brand-facebook); }
+  .reputation-widget__review-icon--yelp { background: var(--brand-yelp); }
+  .reputation-widget__review-text { font-size: 0.9rem; }
+  .reputation-widget__review-text strong { text-transform: uppercase; }
+</style>
+
+<script>
+  function showStage(widget: Element, stage: string, mascot: string) {
+    widget.querySelectorAll("[data-rm-stage]").forEach((el) => {
+      if (el instanceof HTMLElement) el.hidden = el.getAttribute("data-rm-stage") !== stage;
+    });
+    widget.querySelectorAll("[data-rm-mascot]").forEach((el) => {
+      if (el instanceof HTMLElement) el.hidden = el.getAttribute("data-rm-mascot") !== mascot;
+    });
+  }
+
+  document.addEventListener("click", (e) => {
+    if (!(e.target instanceof Element)) return;
+
+    const reopener = e.target.closest('[data-modal-target="reputation-widget"]');
+    if (reopener) {
+      const widget = document.querySelector("[data-reputation-widget]");
+      if (widget) showStage(widget, "prompt", "neutral");
+      return;
+    }
+
+    const actionBtn = e.target.closest("[data-rm-action]");
+    if (!actionBtn) return;
+    const widget = actionBtn.closest("[data-reputation-widget]");
+    if (!widget) return;
+    const action = actionBtn.getAttribute("data-rm-action");
+    if (action === "like") showStage(widget, "positive", "happy");
+    else showStage(widget, "negative", "sad");
+  });
+</script>

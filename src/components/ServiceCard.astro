@@ -1,0 +1,26 @@
+---
+// CMS-powered. One-to-one with the real V2 export's .service-link-block:
+// icon + heading + "Learn More", the whole card a link to the detail page.
+// See Skeleton-Build-Spec.md §6.
+import { Image } from "astro:assets";
+import type { CollectionEntry } from "astro:content";
+
+export interface Props {
+  service: CollectionEntry<"services">;
+}
+const { service } = Astro.props;
+---
+
+<a class="service-card" href={`/services/${service.id}`}>
+  {service.data.serviceIcon && <Image src={service.data.serviceIcon} alt="" class="service-card__icon" />}
+  <h3 class="service-card__heading">{service.data.customName || service.data.name}</h3>
+  <span class="service-card__cta">Learn More</span>
+</a>
+
+<style>
+  .service-card { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-sm); padding: var(--space-lg); background: var(--white); border-radius: var(--radius-md); box-shadow: var(--shadow-card); text-decoration: none; color: inherit; transition: transform var(--motion-duration-fast) var(--motion-ease); }
+  .service-card:hover { transform: translateY(-2px); }
+  .service-card__icon { width: 3.5rem; height: 3.5rem; object-fit: contain; }
+  .service-card__heading { margin: 0; font-size: var(--font-size-md); }
+  .service-card__cta { display: inline-block; margin-block-start: auto; padding: var(--space-xs) var(--space-md); border-radius: var(--radius-sm); background: var(--main); color: var(--on-main); font-size: var(--font-size-sm); font-weight: 600; }
+</style>

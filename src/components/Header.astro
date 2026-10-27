@@ -1,0 +1,283 @@
+---
+// Sitewide fixed header. Generalized from the real V2 Webflow export's
+// header.html (utility bar + primary nav with a Services flyout) — see
+// Skeleton-Build-Spec.md §6. The Services dropdown is fully dynamic
+// (one flyout per live service category) rather than hardcoding category
+// names the way the V2 source does, since Skeleton has no fixed category
+// list.
+//
+// Scroll-state color system (2026-09-08, real visual ref: ref1.jpg):
+// always sticky (position: fixed); default state is transparent
+// background + white text/icons/logo, meant to sit over a hero/banner's
+// dark overlay (see Hero.astro / PageHeaderBanner.astro, both padded to
+// render full-bleed behind this header rather than pushed below it);
+// past a small scroll threshold, .header gets is-scrolled (JS below),
+// which flips to a white background + dark text/icons/logo. The "Book
+// Now" CTA button stays solid-colored in both states — it's a button, not
+// a nav link. The mobile slide-out menu panel is exempted from the
+// swap (forced dark-on-white always, see the max-width:900px block) since
+// it's a full solid panel, not part of the transparent top bar.
+//
+// Logo: site.logoWhite/logoColor (src/data/site.ts) stack and crossfade
+// with the same scroll state, the classic two-image-variant technique.
+// Only one configured → shown plain, no crossfade. Neither configured →
+// falls back to text, which still participates in the color swap.
+import { getSiteInfo } from "../lib/data/site";
+import { getAllServiceCategories } from "../lib/data/serviceCategories";
+import { getServicesByCategory } from "../lib/data/services";
+import { getAllSocialLinks } from "../lib/data/socialLinks";
+import { SOCIAL_ICON_CLASSES, SOCIAL_LABELS } from "../lib/icons/social";
+import { phoneHref } from "../lib/utils/phone";
+import { BLOG_BASE } from "../lib/data/blog";
+
+const site = await getSiteInfo();
+const categories = await getAllServiceCategories();
+const servicesByCategory = await Promise.all(
+  categories.map(async (category) => ({
+    category,
+    services: await getServicesByCategory(category.id),
+  }))
+);
+const socialLinks = await getAllSocialLinks();
+---
+
+<header class="header" data-header>
+  <div class="header__utility">
+    <div class="header__utility-inner">
+      <div class="header__contact-info">
+        {site.address && (
+          <span class="header__utility-item header__utility-item--address">
+            {site.address}{site.addressLine2 ? `, ${site.addressLine2}` : ""}
+          </span>
+        )}
+        {site.phoneNumber && (
+          <a class="header__utility-item header__utility-item--phone" href={phoneHref(site)}>
+            {site.phoneNumber}
+          </a>
+        )}
+      </div>
+      <div class="header__utility-actions">
+        {socialLinks.map((social) => (
+          <a
+            class="header__social-link"
+            href={social.data.link}
+            aria-label={SOCIAL_LABELS[social.data.icon]}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <i class={SOCIAL_ICON_CLASSES[social.data.icon]} aria-hidden="true"></i>
+          </a>
+        ))}
+        {site.bookingUrl && <a class="header__cta" href={site.bookingUrl}>{site.bookingLabel || "Book Now"}</a>}
+      </div>
+    </div>
+  </div>
+
+  <nav class="header__nav" aria-label="Primary">
+    <div class="header__nav-inner">
+      <button class="header__menu-toggle" type="button" data-menu-toggle aria-expanded="false" aria-controls="primary-menu">
+        <span class="header__menu-toggle-bar" aria-hidden="true"></span>
+        <span class="header__menu-toggle-bar" aria-hidden="true"></span>
+        <span class="header__menu-toggle-bar" aria-hidden="true"></span>
+        <span class="sr-only">Menu</span>
+      </button>
+
+      <a class="header__logo" href="/" aria-label={site.practiceName}>
+        {site.logoWhite && site.logoColor ? (
+          <span class="header__logo-stack">
+            <img class="header__logo-image header__logo-image--white" src={site.logoWhite} alt={site.practiceName} />
+            <img class="header__logo-image header__logo-image--color" src={site.logoColor} alt={site.practiceName} />
+          </span>
+        ) : site.logoWhite || site.logoColor ? (
+          <img class="header__logo-image" src={site.logoWhite || site.logoColor} alt={site.practiceName} />
+        ) : (
+          <span class="header__logo-text">{site.practiceName}</span>
+        )}
+      </a>
+
+      <ul class="header__menu" id="primary-menu" data-menu>
+        <li class="header__menu-item"><a class="header__menu-link" href="/">Home</a></li>
+
+        <li class="header__menu-item header__menu-item--dropdown">
+          <button class="header__menu-link header__dropdown-toggle" type="button" data-dropdown-toggle aria-expanded="false">
+            About <span class="header__caret" aria-hidden="true"></span>
+          </button>
+          {/* Fixed slot: keep all three items through any redesign (a redesign
+              once dropped How'd We Do?, the only way to open the reputation
+              widget). Rename or re-route items; don't remove them. */}
+          <ul class="header__dropdown-menu">
+            <li><a href="/meet-the-team">Meet the Team</a></li>
+            <li><a href="/photo-gallery">Photo Gallery</a></li>
+            <li><button type="button" class="header__dropdown-link-button" data-modal-target="reputation-widget">How'd We Do?</button></li>
+          </ul>
+        </li>
+
+        <li class="header__menu-item header__menu-item--dropdown">
+          <button class="header__menu-link header__dropdown-toggle" type="button" data-dropdown-toggle aria-expanded="false">
+            Services <span class="header__caret" aria-hidden="true"></span>
+          </button>
+          <ul class="header__dropdown-menu header__dropdown-menu--services">
+            {servicesByCategory.map(({ category, services }) => (
+              <li class="header__dropdown-item header__dropdown-item--has-submenu">
+                <button type="button" class="header__submenu-toggle" data-dropdown-toggle aria-expanded="false">
+                  {category.data.name} <span class="header__caret" aria-hidden="true"></span>
+                </button>
+                <ul class="header__submenu">
+                  {services.map((service) => (
+                    <li><a href={`/services/${service.id}`}>{service.data.customName || service.data.name}</a></li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+            <li class="header__dropdown-item header__dropdown-item--all"><a href="/services">All Services</a></li>
+          </ul>
+        </li>
+
+        <li class="header__menu-item header__menu-item--dropdown">
+          <button class="header__menu-link header__dropdown-toggle" type="button" data-dropdown-toggle aria-expanded="false">
+            For Pet Owners <span class="header__caret" aria-hidden="true"></span>
+          </button>
+          <ul class="header__dropdown-menu">
+            <li><a href="/faq">FAQs</a></li>
+            <li><a href="/online-forms">New Patient Forms</a></li>
+            <li><a href={BLOG_BASE}>Our Blog</a></li>
+          </ul>
+        </li>
+
+        <li class="header__menu-item"><a class="header__menu-link" href="/contact-us">Contact</a></li>
+      </ul>
+
+      {site.phoneNumber && (
+        <a class="header__mobile-call" href={phoneHref(site)} aria-label={`Call us at ${site.phoneNumber}`}>
+          <span aria-hidden="true">&#128222;</span>
+        </a>
+      )}
+    </div>
+  </nav>
+</header>
+
+<style>
+  .header {
+    position: fixed;
+    inset-block-start: 0;
+    inset-inline: 0;
+    z-index: 50;
+    background: var(--header-bg);
+    box-shadow: none;
+    transition: background-color var(--motion-duration-slow) var(--motion-ease), box-shadow var(--motion-duration-slow) var(--motion-ease);
+    color: var(--header-fg);
+  }
+  .header.is-scrolled {
+    --header-bg: var(--white);
+    --header-fg: var(--heading);
+    box-shadow: var(--shadow-header);
+  }
+
+  .header__utility { font-size: var(--font-size-sm); }
+  .header__utility-inner { max-width: var(--container-max); margin-inline: auto; padding: var(--space-xs) var(--space-md); display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); }
+  .header__contact-info { display: flex; align-items: center; gap: var(--space-md); flex-wrap: wrap; }
+  .header__utility-item { color: inherit; text-decoration: none; }
+  /* Address is address+addressLine2 joined into one string (see markup) —
+     force it to stay on one line rather than wrapping mid-address if the
+     combined string is long and the utility bar is narrow. */
+  .header__utility-item--address { white-space: nowrap; }
+  .header__utility-actions { display: flex; align-items: center; gap: var(--space-sm); }
+  .header__social-link { color: inherit; display: inline-flex; font-size: 1.1rem; }
+  .header__cta { display: inline-block; background: var(--cta); color: var(--on-cta); padding: var(--space-xs) var(--space-md); border-radius: var(--radius-sm); text-decoration: none; font-weight: 600; transition: background-color var(--motion-duration-fast) var(--motion-ease); }
+  .header__cta:hover { background: var(--cta-hover); }
+
+  .header__nav-inner { max-width: var(--container-max); margin-inline: auto; padding: var(--space-sm) var(--space-md); display: flex; align-items: center; gap: var(--space-lg); }
+  .header__logo { display: inline-flex; margin-inline-end: auto; text-decoration: none; color: inherit; }
+  .header__logo:visited { color: inherit; }
+  .header__logo-text { font-weight: 700; font-size: var(--font-size-lg); color: inherit; }
+  .header__logo-stack { position: relative; display: inline-block; block-size: var(--logo-height); }
+  .header__logo-stack .header__logo-image { display: block; block-size: var(--logo-height); inline-size: auto; transition: opacity var(--motion-duration-slow) var(--motion-ease); }
+  .header__logo-stack .header__logo-image--color { position: absolute; inset-block-start: 0; inset-inline-start: 0; opacity: 0; }
+  .header.is-scrolled .header__logo-stack .header__logo-image--white { opacity: 0; }
+  .header.is-scrolled .header__logo-stack .header__logo-image--color { opacity: 1; }
+  .header__logo > .header__logo-image { display: block; block-size: var(--logo-height); inline-size: auto; }
+
+  .header__menu-toggle { display: none; flex-direction: column; gap: 4px; background: none; border: 0; cursor: pointer; padding: var(--space-xs); order: -1; }
+  .header__menu-toggle-bar { width: 22px; height: 2px; background: currentColor; display: block; }
+
+  .header__menu { display: flex; align-items: center; gap: var(--space-lg); list-style: none; margin: 0; padding: 0; }
+  .header__menu-link { background: none; border: 0; font: inherit; color: inherit; text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.3em; padding: 0; }
+  .header__caret { width: 0.5em; height: 0.5em; border-inline-end: 2px solid currentColor; border-block-end: 2px solid currentColor; transform: rotate(45deg); margin-block-start: -0.2em; }
+
+  .header__menu-item--dropdown { position: relative; }
+  .header__dropdown-menu { position: absolute; inset-block-start: 100%; inset-inline-start: 0; min-width: 12rem; background: var(--white); box-shadow: var(--shadow-dropdown); list-style: none; margin: 0; padding: var(--space-xs) 0; display: none; z-index: 10; }
+  .header__dropdown-toggle[aria-expanded="true"] + .header__dropdown-menu,
+  .header__menu-item--dropdown:has(> [aria-expanded="true"]) > .header__dropdown-menu { display: block; }
+  .header__dropdown-menu a,
+  .header__dropdown-link-button { display: block; width: 100%; text-align: start; padding: var(--space-xs) var(--space-md); color: var(--heading); text-decoration: none; background: none; border: 0; font: inherit; cursor: pointer; }
+  .header__dropdown-menu a:hover,
+  .header__dropdown-link-button:hover { background: var(--solid-bg); }
+
+  .header__dropdown-item--has-submenu { position: relative; }
+  .header__submenu-toggle { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 0.5em; padding: var(--space-xs) var(--space-md); background: none; border: 0; font: inherit; color: var(--heading); cursor: pointer; text-align: start; }
+  .header__submenu { position: absolute; inset-inline-start: 100%; inset-block-start: 0; min-width: 12rem; background: var(--white); box-shadow: var(--shadow-dropdown); list-style: none; margin: 0; padding: var(--space-xs) 0; display: none; }
+  .header__submenu-toggle[aria-expanded="true"] + .header__submenu { display: block; }
+  .header__submenu a { display: block; padding: var(--space-xs) var(--space-md); color: var(--heading); text-decoration: none; }
+  .header__submenu a:hover { background: var(--solid-bg); }
+
+  /* color:inherit — same fix as .header__logo (2026-09-08): anchors need
+     this explicitly or the browser's default link color (blue/visited-
+     purple) wins over inheritance from --header-fg. Found while testing
+     the callbar/widget layout, unrelated to that but a real bug either way. */
+  .header__mobile-call { display: none; color: inherit; }
+  .header__mobile-call:visited { color: inherit; }
+
+  @media (max-width: 900px) {
+    .header__menu-toggle { display: inline-flex; }
+    .header__contact-info { display: none; }
+    /* The slide-out panel is a solid white sheet regardless of scroll
+       state — force dark-on-white here rather than inheriting --header-fg. */
+    .header__menu { position: fixed; inset-block-start: var(--header-height); inset-inline: 0; inset-block-end: 0; background: var(--white); flex-direction: column; align-items: stretch; padding: var(--space-md); overflow-y: auto; transform: translateX(-100%); transition: transform var(--motion-duration-base) var(--motion-ease); color: var(--heading); }
+    .header__menu.is-open { transform: translateX(0); }
+    .header__dropdown-menu, .header__submenu { position: static; box-shadow: none; padding-inline-start: var(--space-md); }
+    .header__mobile-call { display: inline-flex; align-items: center; justify-content: center; }
+  }
+</style>
+
+<script>
+  const header = document.querySelector("[data-header]");
+  function updateHeaderScrollState() {
+    header?.classList.toggle("is-scrolled", window.scrollY > 10);
+  }
+  updateHeaderScrollState();
+  window.addEventListener("scroll", updateHeaderScrollState, { passive: true });
+
+  document.addEventListener("click", (e) => {
+    if (!(e.target instanceof Element)) return;
+
+    const menuToggle = e.target.closest("[data-menu-toggle]");
+    if (menuToggle) {
+      const menu = document.querySelector("[data-menu]");
+      const expanded = menuToggle.getAttribute("aria-expanded") === "true";
+      menuToggle.setAttribute("aria-expanded", String(!expanded));
+      menu?.classList.toggle("is-open", !expanded);
+      return;
+    }
+
+    const dropdownToggle = e.target.closest("[data-dropdown-toggle]");
+    if (dropdownToggle) {
+      const expanded = dropdownToggle.getAttribute("aria-expanded") === "true";
+      const parentList = dropdownToggle.parentElement?.parentElement;
+      parentList?.querySelectorAll(":scope > li > [data-dropdown-toggle]").forEach((btn) => {
+        if (btn !== dropdownToggle) btn.setAttribute("aria-expanded", "false");
+      });
+      dropdownToggle.setAttribute("aria-expanded", String(!expanded));
+      return;
+    }
+
+    if (!e.target.closest(".header__menu-item--dropdown")) {
+      document.querySelectorAll('[data-dropdown-toggle][aria-expanded="true"]').forEach((btn) => btn.setAttribute("aria-expanded", "false"));
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      document.querySelectorAll('[data-dropdown-toggle][aria-expanded="true"]').forEach((btn) => btn.setAttribute("aria-expanded", "false"));
+    }
+  });
+</script>

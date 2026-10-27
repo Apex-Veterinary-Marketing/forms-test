@@ -1,0 +1,53 @@
+---
+// Pure presentation — every value here is already resolved (absolute URLs,
+// a final title string, a real hex for theme-color). BaseLayout does the
+// resolving (canonical from Astro.url, title-template, OG image fallback
+// chain, --main parsed out of tokens.css) so this component stays a plain
+// props-in/tags-out mapping. See Skeleton-Build-Spec.md §9 for the schema
+// side of SEO; this is everything else in <head>.
+export interface Props {
+  title: string; // final title, already suffixed — see BaseLayout
+  description: string; // BaseLayout guarantees a non-empty fallback
+  canonical: string; // absolute URL
+  ogImage: string; // absolute URL — BaseLayout falls back to /og-default.png
+  ogImageWidth?: number;
+  ogImageHeight?: number;
+  ogImageAlt?: string;
+  ogType?: "website" | "article";
+  themeColor?: string; // hex, parsed from tokens.css's --main; omitted if unparseable
+  noindex?: boolean;
+}
+const { title, description, canonical, ogImage, ogImageWidth, ogImageHeight, ogImageAlt, ogType = "website", themeColor, noindex } = Astro.props;
+---
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+{noindex && <meta name="robots" content="noindex, nofollow" />}
+
+{/* Favicon — placeholder paw mark (scripts/generate-placeholder-assets.mjs).
+    REPLACE favicon.png (32×32), favicon.ico and apple-touch-icon.png (180×180)
+    in public/ with the client's files before launch; these tags stay as they
+    are. There is deliberately no favicon.svg: browsers prefer an SVG icon, so
+    a leftover placeholder SVG would hide the client's PNG. */}
+<link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
+<link rel="icon" href="/favicon.ico" sizes="32x32" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:type" content={ogType} />
+<meta property="og:image" content={ogImage} />
+{ogImageWidth && <meta property="og:image:width" content={String(ogImageWidth)} />}
+{ogImageHeight && <meta property="og:image:height" content={String(ogImageHeight)} />}
+{ogImageAlt && <meta property="og:image:alt" content={ogImageAlt} />}
+{/* Every page always has SOME og:image (BaseLayout's default), so the
+    large-image card is always valid — no per-page branching needed. */}
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImage} />
+{ogImageAlt && <meta name="twitter:image:alt" content={ogImageAlt} />}
+
+{themeColor && <meta name="theme-color" content={themeColor} />}
+<meta name="generator" content={Astro.generator} />

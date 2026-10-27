@@ -1,0 +1,95 @@
+---
+// Generic, not single-purpose — content is slotted (image lightbox, video,
+// a bio, or a GravityFormEmbed). Opened via any element carrying
+// data-modal-target="<this id>". See Skeleton-Build-Spec.md §6.
+export interface Props {
+  id: string;
+}
+const { id } = Astro.props;
+---
+<div class="modal" id={id} data-modal hidden>
+  <div class="modal__overlay" data-modal-close></div>
+  <div class="modal__dialog" role="dialog" aria-modal="true" tabindex="-1">
+    <button class="modal__close" type="button" data-modal-close aria-label="Close">&times;</button>
+    <div class="modal__body">
+      <slot />
+    </div>
+  </div>
+</div>
+
+<style>
+  .modal[hidden] { display: none; }
+  .modal { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; }
+  .modal__overlay { position: absolute; inset: 0; background: var(--overlay-color); backdrop-filter: blur(4px); animation: motion-fade-in var(--motion-duration-slow) var(--motion-ease); }
+  /* Dialog itself stays unclipped (no overflow/max-height here) so decorative
+     content slotted in — e.g. ReputationWidget's peeking mascot image — can
+     overflow past the card's edge. The scroll/size constraint that used to
+     live here moves to .modal__body, which wraps only the actual slotted
+     content, so this is visually identical for every other modal consumer. */
+  .modal__dialog { position: relative; z-index: 1; background: var(--white); max-width: min(90vw, 40rem); border-radius: var(--radius-md); animation: motion-pop var(--motion-duration-slow) var(--motion-ease-out); }
+  .modal__body { max-height: 85vh; overflow: auto; padding: var(--space-lg); }
+  .modal__close { position: absolute; top: var(--space-xs); right: var(--space-xs); z-index: 2; background: none; border: 0; font-size: 1.5rem; line-height: 1; cursor: pointer; }
+</style>
+
+<script>
+  function focusableIn(el: Element) {
+    return el.querySelectorAll('a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])');
+  }
+
+  function openModal(modal: HTMLElement, trigger: Element | null) {
+    modal.hidden = false;
+    (modal as any)._returnFocus = trigger;
+    const dialog = modal.querySelector(".modal__dialog");
+    if (dialog instanceof HTMLElement) dialog.focus();
+    document.body.classList.add("has-open-modal");
+  }
+
+  function closeModal(modal: HTMLElement) {
+    modal.hidden = true;
+    document.body.classList.remove("has-open-modal");
+    const returnFocus = (modal as any)._returnFocus;
+    if (returnFocus && typeof returnFocus.focus === "function") returnFocus.focus();
+  }
+
+  document.addEventListener("click", (e) => {
+    if (!(e.target instanceof Element)) return;
+
+    const opener = e.target.closest("[data-modal-target]");
+    if (opener) {
+      const id = opener.getAttribute("data-modal-target");
+      const modal = id ? document.getElementById(id) : null;
+      if (modal) openModal(modal, opener);
+      return;
+    }
+
+    const closer = e.target.closest("[data-modal-close]");
+    if (closer) {
+      const modal = closer.closest("[data-modal]");
+      if (modal instanceof HTMLElement) closeModal(modal);
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    const openModalEl = document.querySelector("[data-modal]:not([hidden])");
+    if (!(openModalEl instanceof HTMLElement)) return;
+
+    if (e.key === "Escape") {
+      closeModal(openModalEl);
+      return;
+    }
+
+    if (e.key === "Tab") {
+      const focusable = Array.from(focusableIn(openModalEl)).filter((el) => el instanceof HTMLElement) as HTMLElement[];
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  });
+</script>
