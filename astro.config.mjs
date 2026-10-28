@@ -58,9 +58,57 @@ const singleSitemap = {
   },
 };
 
+// GitHub Pages demo: the site is served from a sub-path
+// (apex-veterinary-marketing.github.io/forms-test/), not a domain root, but the
+// components hard-code root-relative URLs (href="/contact-us", src="/images/…",
+// CSS url(/_astro/…)). When BASE_PATH is set (only deploy-pages.yml sets it,
+// from actions/configure-pages), this step prefixes every root-relative URL and
+// every absolute URL on the site's own origin in the built files. Local and
+// Cloudflare builds leave BASE_PATH unset and are unaffected. With a custom
+// domain, configure-pages reports an empty base path and nothing is rewritten.
+const basePath = (process.env.BASE_PATH || '').replace(/\/$/, '');
+/** @type {import('astro').AstroIntegration} */
+const basePathRewrite = {
+  name: 'base-path-rewrite',
+  hooks: {
+    'astro:build:done': ({ dir, logger }) => {
+      if (!basePath) return;
+      const out = fileURLToPath(dir);
+      const seg = basePath.slice(1).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // "/x" but not "//cdn…" and not already "/forms-test/…"
+      const rel = `/(?!/)(?!${seg}(?:/|$))`;
+      const origin = siteUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const rules = [
+        [new RegExp(`(=")${rel}`, 'g'), `$1${basePath}/`], // attributes
+        // srcset: the first candidate is covered above, the rest follow a comma
+        [/(srcset=")([^"]*)"/g, (_, attr, list) => `${attr}${list.replace(new RegExp(`(,\\s*)${rel}`, 'g'), `$1${basePath}/`)}"`],
+        [new RegExp(`(url\\(["']?)${rel}`, 'g'), `$1${basePath}/`], // CSS / inline styles
+        [new RegExp(`(;\\s*url=)${rel}`, 'gi'), `$1${basePath}/`], // meta refresh redirects
+        [new RegExp(`(${origin})${rel}`, 'g'), `$1${basePath}/`], // canonical, og:*, JSON-LD, sitemap
+        [new RegExp(`(${origin})(?=["<\\s]|$)`, 'gm'), `$1${basePath}`], // bare origin
+      ];
+      let count = 0;
+      const walk = (d) => {
+        for (const entry of fs.readdirSync(d, { withFileTypes: true })) {
+          const file = path.join(d, entry.name);
+          if (entry.isDirectory()) walk(file);
+          else if (/\.(html|css|xml|txt)$/.test(entry.name)) {
+            const before = fs.readFileSync(file, 'utf8');
+            const after = rules.reduce((text, [re, to]) => text.replace(re, to), before);
+            if (after !== before) { fs.writeFileSync(file, after); count++; }
+          }
+        }
+      };
+      walk(out);
+      logger.info(`prefixed URLs with ${basePath} in ${count} file(s)`);
+    },
+  },
+};
+
 export default defineConfig({
   site: siteUrl,
   // sitemap() lists every route; singleSitemap turns that into /sitemap.xml,
-  // which robots.txt (src/pages/robots.txt.ts) points to.
-  integrations: [sitemap(), singleSitemap],
+  // which robots.txt (src/pages/robots.txt.ts) points to. basePathRewrite runs
+  // last so it sees the finished sitemap.
+  integrations: [sitemap(), singleSitemap, basePathRewrite],
 });

@@ -2,10 +2,10 @@
 # Copied from malak-state (see its docs/launch/github-pages-launch.md for the
 # full launch runbook: Pages source, PAGES_LIVE, custom domain, DNS, HTTPS).
 #
-# OFF until launch day: every job is skipped unless the repo variable
-# PAGES_LIVE is "true" (Settings → Secrets and variables → Actions → Variables).
-# Before that, pushes would publish to the github.io/forms-test/ sub-path,
-# where the site's root-relative paths break.
+# OFF unless the repo variable PAGES_LIVE is "true" (Settings → Secrets and
+# variables → Actions → Variables). Demo site: it is served from the
+# github.io/forms-test/ sub-path; the build prefixes every link with it (see
+# the configure-pages step and basePathRewrite in astro.config.mjs).
 #
 # Triggers:
 # - push to main: every edit, merge or local push.
@@ -55,7 +55,15 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Where Pages serves the site: base_path "/forms-test" on github.io, ""
+      # once a custom domain is attached. astro.config.mjs (basePathRewrite)
+      # prefixes the built site's URLs with it.
+      - id: pages
+        uses: actions/configure-pages@v5
       - run: npm run build
+        env:
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          SITE_URL: ${{ steps.pages.outputs.origin }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
