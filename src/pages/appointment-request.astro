@@ -1,22 +1,404 @@
+
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PageHeaderBanner from "../components/PageHeaderBanner.astro";
-import GravityFormEmbed from "../components/GravityFormEmbed.astro";
 import Section from "../components/Section.astro";
 import BeforeYourVisit from "../components/BeforeYourVisit.astro";
 import { visitTips } from "../data/visit-tips";
 ---
 
-<BaseLayout title="Request an Appointment" description="Book an appointment for your pet.">
+<BaseLayout
+  title="Request an Appointment"
+  description="Book an appointment for your pet."
+>
   <PageHeaderBanner heading="Request an Appointment" />
+
   <Section tone="soft">
     <BeforeYourVisit tips={visitTips} />
   </Section>
-  <div class="page-section">
-    <GravityFormEmbed formId="appointment-request" context="appointment" heading="Appointment Request" />
+
+  <div class="page-section appointment-hubspot-form">
+    
+
+    <div
+      class="hs-form-html"
+      data-region="na1"
+      data-form-id="638865b1-7145-4257-94a6-494a40a501b2"
+      data-portal-id="23749525"
+    ></div>
   </div>
 </BaseLayout>
 
-<style>
-  .page-section { max-width: 40rem; margin-inline: auto; padding: var(--space-xl) var(--space-md); }
+<script
+  is:inline
+  src="https://js.hsforms.net/forms/embed/developer/23749525.js"
+  defer
+></script>
+
+<script is:inline>
+  (function () {
+    var newImage =
+      "https://242801572.fs1.hubspotusercontent-na2.net/hubfs/242801572/Screenshot_79.png";
+
+    function replaceBannerImages() {
+      document
+        .querySelectorAll(".appointment-hubspot-form .hsfc-Step__Banner")
+        .forEach(function (banner) {
+          banner.querySelectorAll("img").forEach(function (img) {
+            if (img.src !== newImage) {
+              img.src = newImage;
+              img.srcset = "";
+            }
+          });
+
+          banner.style.setProperty(
+            "background-image",
+            'url("' + newImage + '")',
+            "important"
+          );
+        });
+    }
+
+    function initBannerReplacement() {
+      var container = document.querySelector(".appointment-hubspot-form");
+
+      if (!container) return;
+
+      replaceBannerImages();
+
+      var observer = new MutationObserver(replaceBannerImages);
+
+      observer.observe(container, {
+        childList: true,
+        subtree: true
+      });
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initBannerReplacement);
+    } else {
+      initBannerReplacement();
+    }
+
+    window.addEventListener("load", replaceBannerImages);
+  })();
+</script>
+
+<style is:global>
+  @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@100;200;300;400;500;600;700&display=swap");
+
+  /* PAGE LAYOUT */
+
+  .appointment-hubspot-form {
+    max-width: 760px;
+    width: 100%;
+    margin-inline: auto;
+    padding: var(--space-xl) var(--space-md);
+    box-sizing: border-box;
+  }
+
+  .appointment-form-heading {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  /* FONT */
+
+  .appointment-hubspot-form,
+  .appointment-hubspot-form h1,
+  .appointment-hubspot-form h2,
+  .appointment-hubspot-form h3,
+  .appointment-hubspot-form h4,
+  .appointment-hubspot-form h5,
+  .appointment-hubspot-form h6,
+  .appointment-hubspot-form p,
+  .appointment-hubspot-form span,
+  .appointment-hubspot-form div,
+  .appointment-hubspot-form li,
+  .appointment-hubspot-form ul,
+  .appointment-hubspot-form a,
+  .appointment-hubspot-form label,
+  .appointment-hubspot-form button,
+  .appointment-hubspot-form input,
+  .appointment-hubspot-form textarea,
+  .appointment-hubspot-form select {
+    font-family: "IBM Plex Sans", sans-serif !important;
+  }
+
+  /* FORM CONTAINER */
+
+  .appointment-hubspot-form #form-target {
+    position: relative;
+    width: min(560px, 100%);
+    background: #ffffff;
+    border: 2px solid #223e6b;
+    border-radius: 28px !important;
+    box-shadow: #223e6b 0 8px 0;
+    padding: 0 !important;
+    box-sizing: border-box;
+    margin: auto;
+  }
+
+  .appointment-hubspot-form form {
+    position: relative;
+    width: min(560px, 100%);
+    background: #ffffff !important;
+    border: 2px solid #223e6b !important;
+    border-radius: 28px !important;
+    box-shadow: #223e6b 0 8px 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box;
+    margin: auto !important;
+  }
+
+  .appointment-hubspot-form [data-hsfc-id="Step"] {
+    box-shadow: none !important;
+    border-radius: 28px !important;
+  }
+
+  /* STEP CONTENT */
+
+  .appointment-hubspot-form .hsfc-Step__Content {
+    position: relative;
+    padding: 25px 30px 65px !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* FORM BANNER */
+
+  .appointment-hubspot-form .hsfc-Step__Banner {
+    border-top-left-radius: 28px !important;
+    border-top-right-radius: 28px !important;
+    background-size: contain !important;
+    background-color: #eaeffb !important;
+  }
+
+  .appointment-hubspot-form
+  [data-hsfc-id="Renderer"]
+  .hsfc-Step--layoutTemplate-bottom > .hsfc-Step__Banner {
+    height: 158px !important;
+  }
+
+  /* LABELS */
+
+  .appointment-hubspot-form form label,
+  .appointment-hubspot-form form label span {
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 6px;
+    min-width: 0;
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    color: #223e6b !important;
+  }
+
+  .appointment-hubspot-form
+  [data-hsfc-id="Renderer"]
+  .hsfc-FieldLabel > span {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+  }
+
+  /* INPUTS */
+
+  .appointment-hubspot-form .hsfc-TextInput,
+  .appointment-hubspot-form form input:not([type="checkbox"]):not([type="radio"]),
+  .appointment-hubspot-form form select {
+    font-size: 15px !important;
+    color: #333333 !important;
+    background: #f4f7fc !important;
+    border: 1.5px solid rgba(34, 62, 107, 0.22) !important;
+    border-radius: 12px !important;
+    padding: 12px 14px !important;
+    width: 100% !important;
+    box-sizing: border-box;
+    outline: none !important;
+    height: 50px;
+  }
+
+  .appointment-hubspot-form form textarea {
+    font-size: 15px !important;
+    color: #333333 !important;
+    background: #f4f7fc !important;
+    border: 1.5px solid rgba(34, 62, 107, 0.22) !important;
+    border-radius: 12px !important;
+    padding: 12px 14px !important;
+    width: 100% !important;
+    box-sizing: border-box;
+    outline: none !important;
+  }
+
+  .appointment-hubspot-form .hsfc-TextInput:focus,
+  .appointment-hubspot-form form select:focus,
+  .appointment-hubspot-form form textarea:focus {
+    border-color: #223e6b !important;
+  }
+
+  /* PHONE FIELD */
+
+  .appointment-hubspot-form
+  [data-hsfc-id="Renderer"]
+  .hsfc-PhoneInput:not(.hsfc-PhoneInput--rtl)
+  > .hsfc-TextInput {
+    border-left: none !important;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+  }
+
+  .appointment-hubspot-form
+  .hsfc-PhoneInput:not(.hsfc-PhoneInput--rtl)
+  .hsfc-PhoneInput__FlagAndCaret {
+    border-top-left-radius: 12px !important;
+    border-bottom-left-radius: 12px !important;
+  }
+
+  /* FORM ROWS */
+
+  .appointment-hubspot-form
+  [data-hsfc-id="Renderer"] .hsfc-Row {
+    margin-bottom: 15px !important;
+  }
+
+  /* PROGRESS BAR AT TOP */
+
+  .appointment-hubspot-form
+  .hsfc-Step__Content > .hsfc-Row:has(.hsfc-ProgressBar) {
+    order: -999 !important;
+    width: 100% !important;
+    margin-bottom: 10px;
+  }
+
+  .appointment-hubspot-form
+  .hsfc-Step__Content > .hsfc-Row:not(:has(.hsfc-ProgressBar)) {
+    order: 0 !important;
+  }
+
+  .appointment-hubspot-form
+  .hsfc-Step__Content > .hsfc-NavigationRow {
+    order: 999 !important;
+  }
+
+  /* PROGRESS BAR DESIGN */
+
+  .appointment-hubspot-form .hsfc-ProgressBar {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    width: 100% !important;
+    margin: 0 0 7px !important;
+  }
+
+  .appointment-hubspot-form .hsfc-ProgressBar__Progress {
+    order: 1 !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    height: 8px !important;
+  }
+
+  .appointment-hubspot-form .hsfc-ProgressBar__Progress > div {
+    height: 8px !important;
+  }
+
+  /* STEP COUNTER */
+
+  .appointment-hubspot-form .hsfc-ProgressBar__Text {
+    order: 2 !important;
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    line-height: 20px !important;
+    color: #2f5694 !important;
+  }
+
+  .appointment-hubspot-form .hsfc-ProgressBar__Text::before {
+    content: "Step ";
+  }
+
+  /* DEFAULT BUTTON */
+
+  .appointment-hubspot-form .hsfc-Button {
+    background: #ffffff !important;
+    color: #223e6b !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    padding: 12px 22px !important;
+    border-radius: 999px !important;
+    border: 2px solid rgba(34, 62, 107, 0.25) !important;
+    cursor: pointer !important;
+    box-shadow: none !important;
+  }
+
+  /* PRIMARY BUTTON */
+
+  .appointment-hubspot-form form [aria-busy="false"] {
+    background: #f3b23e !important;
+    color: #223e6b !important;
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    padding: 12px 26px !important;
+    border-radius: 999px !important;
+    border: 2px solid #223e6b !important;
+    box-shadow: #223e6b 0 3px 0 !important;
+    cursor: pointer !important;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  /* NAVIGATION */
+
+  .appointment-hubspot-form .hsfc-NavigationRow {
+    margin-top: 7px;
+  }
+
+  .appointment-hubspot-form [data-hsfc-id="NavigationRow"] {
+    margin-top: 20px !important;
+  }
+
+  /* PRIVACY MESSAGE */
+
+  .appointment-hubspot-form .hsfc-Step__Content::after {
+    content: "We will never share your information. Your data is confidential.";
+    position: absolute;
+    bottom: 25px;
+    left: 30px;
+    right: 20px;
+    font-size: 13px !important;
+    line-height: 19px !important;
+    color: #666666 !important;
+    pointer-events: none;
+  }
+
+  /* MOBILE RESPONSIVE */
+
+  @media (max-width: 600px) {
+    .appointment-hubspot-form {
+      padding: 50px 16px;
+    }
+
+    .appointment-hubspot-form form,
+    .appointment-hubspot-form #form-target {
+      width: 100%;
+    }
+
+    .appointment-hubspot-form .hsfc-Step__Content {
+      padding: 25px 20px 85px !important;
+    }
+
+    .appointment-hubspot-form .hsfc-Step__Content::after {
+      left: 20px;
+      right: 20px;
+      bottom: 25px;
+    }
+
+    .appointment-hubspot-form .hsfc-ProgressBar {
+      gap: 8px !important;
+    }
+
+    .appointment-hubspot-form .hsfc-ProgressBar__Text {
+      font-size: 12px !important;
+    }
+  }
 </style>
