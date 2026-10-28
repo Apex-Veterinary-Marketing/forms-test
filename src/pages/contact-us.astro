@@ -1,18 +1,520 @@
+
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PageHeaderBanner from "../components/PageHeaderBanner.astro";
-import GravityFormEmbed from "../components/GravityFormEmbed.astro";
 import LocationSection from "../components/LocationSection.astro";
+
 ---
 
-<BaseLayout title="Contact Us" description="Get in touch with our team.">
+<BaseLayout
+  title="Contact Us"
+  description="Get in touch with our team."
+>
   <PageHeaderBanner heading="Contact Us" />
-  <div class="page-section">
-    <GravityFormEmbed formId="contact" context="contact" heading="Send Us a Message" />
+
+  <div class="page-section contact-hubspot-form">
+
+
+    <!-- HubSpot Form -->
+    <div
+      class="hs-form-html"
+      data-region="na1"
+      data-form-id="6d455a4f-a6bb-4e12-9416-5629122166f7"
+      data-portal-id="23749525"
+    ></div>
+
+    <script is:inline
+      src="https://js.hsforms.net/forms/embed/developer/23749525.js"
+      defer
+    ></script>
   </div>
+
   <LocationSection />
 </BaseLayout>
 
-<style>
-  .page-section { max-width: 40rem; margin-inline: auto; padding: var(--space-xl) var(--space-md); }
+<style is:global>
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&display=swap");
+
+.contact-hubspot-form,
+.contact-hubspot-form input,
+.contact-hubspot-form button,
+.contact-hubspot-form select,
+.contact-hubspot-form textarea, 
+.contact-hubspot-form form h2,
+.contact-hubspot-form form h2 span,
+.contact-hubspot-form form p,
+.contact-hubspot-form form p span, 
+.contact-hubspot-form form label,
+.contact-hubspot-form form label span,
+.contact-hubspot-form form h4,
+.contact-hubspot-form form h4 span {
+  font-family: "IBM Plex Sans", sans-serif !important;
+}
+
+
+
+
+
+/* =========================================
+   CONTACT SECTION
+========================================= */
+
+.contact-form-section {
+  padding: var(--space-xl) var(--space-md);
+}
+
+.contact-hubspot-form {
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.contact-form-heading {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+/* =========================================
+   FORM CONTAINER
+========================================= */
+
+.contact-hubspot-form #form-target {
+  position: relative;
+  width: min(560px, 100%);
+  background: rgb(255, 255, 255);
+  border: 2px solid rgb(34, 62, 107);
+  border-radius: 28px !important;
+  box-shadow: rgb(34, 62, 107) 0px 8px 0px;
+  padding: 0 !important;
+  box-sizing: border-box;
+  margin: auto;
+}
+
+.contact-hubspot-form form {
+  position: relative;
+  max-width: 720px;
+  width: 100%;
+  background: rgb(255, 255, 255) !important;
+  border: 2px solid rgb(34, 62, 107) !important;
+  border-radius: 28px !important;
+  box-shadow: rgb(34, 62, 107) 0px 8px 0px !important;
+  padding: 0 !important;
+  box-sizing: border-box;
+  margin: auto !important;
+}
+
+/* =========================================
+   FORM STEP
+========================================= */
+
+.contact-hubspot-form [data-hsfc-id="Step"] {
+  box-shadow: none !important;
+  border-radius: 28px !important;
+}
+
+.contact-hubspot-form .hsfc-Step__Content {
+  position: relative;
+  padding: 36px 36px 65px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* =========================================
+   FORM BANNER
+========================================= */
+
+.contact-hubspot-form .hsfc-Step__Banner {
+  border-top-left-radius: 28px !important;
+  border-top-right-radius: 28px !important;
+  background-size: contain !important;
+  background-color: #eaeffb !important;
+}
+
+.contact-hubspot-form
+[data-hsfc-id="Renderer"]
+.hsfc-Step--layoutTemplate-bottom > .hsfc-Step__Banner {
+  height: 158px !important;
+}
+
+/* =========================================
+   FORM HEADINGS
+========================================= */
+
+.contact-hubspot-form form h4 {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.18em !important;
+  text-transform: uppercase !important;
+  color: rgb(47, 86, 148) !important;
+  margin-bottom: -7px !important;
+}
+
+.contact-hubspot-form form h2 {
+  font-weight: 800 !important;
+  font-size: 28px !important;
+  line-height: 1.12 !important;
+  color: rgb(34, 62, 107) !important;
+  margin: 0 0 22px !important;
+  text-wrap: balance !important;
+}
+
+/* =========================================
+   FIELD LABELS
+========================================= */
+
+.contact-hubspot-form form label,
+.contact-hubspot-form form label span {
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  color: rgb(34, 62, 107) !important;
+}
+
+.contact-hubspot-form label,
+.contact-hubspot-form label span {
+  margin-bottom: 1px !important;
+}
+
+.contact-hubspot-form
+[data-hsfc-id="Renderer"]
+.hsfc-FieldLabel > span {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+}
+
+/* =========================================
+   INPUT FIELDS
+========================================= */
+
+.contact-hubspot-form .hsfc-TextInput,
+.contact-hubspot-form form select {
+  font-size: 15px !important;
+  color: rgb(51, 51, 51) !important;
+  background: rgb(244, 247, 252) !important;
+  border: 1.5px solid rgba(34, 62, 107, 0.22) !important;
+  border-radius: 12px !important;
+  padding: 12px 14px !important;
+  width: 100% !important;
+  box-sizing: border-box;
+  outline: none !important;
+  height: 50px;
+}
+
+.contact-hubspot-form form textarea {
+  font-size: 15px !important;
+  color: #333 !important;
+  background: #f4f7fc !important;
+  border: 1.5px solid rgba(34, 62, 107, 0.22) !important;
+  border-radius: 12px !important;
+  padding: 12px 14px !important;
+  width: 100% !important;
+  box-sizing: border-box;
+  outline: none !important;
+}
+
+.contact-hubspot-form .hsfc-TextInput:focus,
+.contact-hubspot-form form select:focus,
+.contact-hubspot-form form textarea:focus {
+  border-color: #223e6b !important;
+}
+
+/* =========================================
+   PHONE INPUT
+========================================= */
+
+.contact-hubspot-form
+[data-hsfc-id="Renderer"]
+.hsfc-PhoneInput:not(.hsfc-PhoneInput--rtl)
+> .hsfc-TextInput {
+  border-left: none !important;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+}
+
+.contact-hubspot-form
+.hsfc-PhoneInput:not(.hsfc-PhoneInput--rtl)
+.hsfc-PhoneInput__FlagAndCaret {
+  border-top-left-radius: 12px !important;
+  border-bottom-left-radius: 12px !important;
+}
+
+/* Original Specific Phone Field */
+
+.contact-hubspot-form
+div#\35 b423231-6323-4395-b308-11077602ebba-2650960129658 input {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+}
+
+.contact-hubspot-form
+div#\35 b423231-6323-4395-b308-11077602ebba-2650960129658
+.hsfc-PhoneInput__FlagAndCaret {
+  border-top-left-radius: 12px !important;
+  border-bottom-left-radius: 12px !important;
+}
+
+/* =========================================
+   FORM ROWS
+========================================= */
+
+.contact-hubspot-form
+[data-hsfc-id="Renderer"] .hsfc-Row {
+  margin-bottom: 13px;
+  gap: 20px !important;
+}
+
+/* =========================================
+   PROGRESS BAR POSITION
+========================================= */
+
+.contact-hubspot-form
+.hsfc-Step__Content > .hsfc-Row:has(.hsfc-ProgressBar) {
+  order: -999 !important;
+  width: 100% !important;
+  margin-bottom: 10px;
+}
+
+.contact-hubspot-form
+.hsfc-Step__Content > .hsfc-Row:not(:has(.hsfc-ProgressBar)) {
+  order: 0 !important;
+}
+
+.contact-hubspot-form
+.hsfc-Step__Content > .hsfc-NavigationRow {
+  order: 999 !important;
+}
+
+/* =========================================
+   PROGRESS BAR DESIGN
+========================================= */
+
+.contact-hubspot-form .hsfc-ProgressBar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+  margin: 0 0 7px !important;
+}
+
+.contact-hubspot-form .hsfc-ProgressBar__Progress {
+  order: 1 !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  height: 8px !important;
+}
+
+.contact-hubspot-form .hsfc-ProgressBar__Progress > div {
+  height: 8px !important;
+}
+
+/* =========================================
+   STEP COUNTER
+========================================= */
+
+.contact-hubspot-form .hsfc-ProgressBar__Text {
+  order: 2 !important;
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 20px !important;
+  color: #2f5694 !important;
+}
+
+.contact-hubspot-form .hsfc-ProgressBar__Text::before {
+  content: "Step ";
+}
+
+/* =========================================
+   DEFAULT BUTTON
+========================================= */
+
+.contact-hubspot-form .hsfc-Button {
+  background: rgb(255, 255, 255) !important;
+  color: rgb(34, 62, 107) !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  padding: 12px 22px !important;
+  border-radius: 999px !important;
+  border: 2px solid rgba(34, 62, 107, 0.25) !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+}
+
+/* =========================================
+   PRIMARY BUTTON
+========================================= */
+
+.contact-hubspot-form form [aria-busy="false"] {
+  background: rgb(243, 178, 62) !important;
+  color: rgb(34, 62, 107) !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  padding: 12px 26px !important;
+  border-radius: 999px !important;
+  border: 2px solid rgb(34, 62, 107) !important;
+  box-shadow: rgb(34, 62, 107) 0px 3px 0px !important;
+  cursor: pointer !important;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+/* =========================================
+   NAVIGATION
+========================================= */
+
+.contact-hubspot-form .hsfc-NavigationRow {
+  margin-top: 7px;
+}
+
+.contact-hubspot-form [data-hsfc-id="NavigationRow"] {
+  margin-top: 20px !important;
+}
+
+.contact-hubspot-form .hsfc-NavigationRow__Buttons {
+  justify-content: flex-start !important;
+}
+
+.contact-hubspot-form .hsfc-NavigationRow__Alerts {
+  margin: 0 !important;
+}
+
+.contact-hubspot-form
+[data-hsfc-id="Renderer"]
+.hsfc-Step .hsfc-Step__Content > :last-child {
+  margin-top: 0 !important;
+}
+
+/* =========================================
+   CHECKBOX FIELDS
+========================================= */
+
+.contact-hubspot-form
+[data-hsfc-id="Renderer"]
+.hsfc-CheckboxField label,
+.contact-hubspot-form
+[data-hsfc-id="Renderer"]
+.hsfc-CheckboxField label span {
+  flex-direction: row !important;
+  gap: 16px !important;
+  font-size: 14px !important;
+  line-height: 20px !important;
+  color: #333 !important;
+  font-weight: 500 !important;
+  align-items: flex-start !important;
+}
+
+.contact-hubspot-form
+[data-hsfc-id="Renderer"]
+.hsfc-CheckboxField label > input {
+  margin-top: 5px;
+}
+
+/* =========================================
+   SPECIFIC FIELD STYLING
+========================================= */
+
+.contact-hubspot-form
+#b7d5449e-ed89-41bf-bcc9-cefc8db8b19d-2667462381699 {
+  margin: 0 !important;
+}
+
+.contact-hubspot-form
+div#\31 a8f5063-3502-4197-827b-e473c7878595-2582707693856 {
+  width: 48%;
+}
+
+.contact-hubspot-form
+[data-hsfc-id="Renderer"]
+[name="0-1/practice_name"] {
+  width: 48% !important;
+}
+
+/* =========================================
+   PRIVACY MESSAGE
+========================================= */
+
+.contact-hubspot-form .hsfc-Step__Content::after {
+  content: "We will never share your information. Your data is confidential.";
+  position: absolute;
+  bottom: 25px;
+  left: 38px;
+  font-size: 13px !important;
+  line-height: 19px !important;
+  color: #666 !important;
+  pointer-events: none;
+      font-family: 'IBM Plex Sans' !important;
+}
+
+/* =========================================
+   MOBILE RESPONSIVE
+========================================= */
+
+@media (max-width: 600px) {
+
+  .contact-form-section {
+    padding: 50px 16px;
+  }
+
+  .contact-hubspot-form {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .contact-hubspot-form form {
+    width: 100%;
+  }
+
+  .contact-hubspot-form
+  [data-hsfc-id="Renderer"]
+  [name="0-1/practice_name"] {
+    width: 100% !important;
+  }
+
+  .contact-hubspot-form .hsfc-Step__Content {
+    padding: 44px 28px 105px !important;
+  }
+
+  .contact-hubspot-form .hsfc-Step__Content::after {
+    left: 26px;
+    right: 20px;
+    bottom: 47px;
+  }
+
+  .contact-hubspot-form
+  div#\31 a8f5063-3502-4197-827b-e473c7878595-2582707693856 {
+    width: 100%;
+  }
+
+  .contact-hubspot-form .hsfc-Step h2 {
+    font-size: 24px !important;
+  }
+
+  .contact-hubspot-form
+  [data-hsfc-id="Renderer"] .hsfc-Row {
+    gap: 12px !important;
+  }
+}
+
+
+
+
+
+  .page-section {
+    max-width: 40rem;
+    margin-inline: auto;
+    padding: var(--space-xl) var(--space-md);
+  }
+
+  .form-heading {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+
+
 </style>
